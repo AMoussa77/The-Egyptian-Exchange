@@ -6,7 +6,10 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder"
+    "build": "electron-builder --publish=never",
+    "dist": "electron-builder --publish=never",
+    "publish": "electron-builder --publish=always",
+    "release": "node build-release.js"
   },
   "keywords": ["stocks", "egyptian-exchange", "desktop", "electron"],
   "author": "Your Name",
@@ -18,7 +21,7 @@
   "dependencies": {
     "xlsx": "^0.18.5",
     "chokidar": "^3.5.3",
-    "node-ole": "^1.0.0"
+    "electron-updater": "^6.1.7"
   },
   "build": {
     "appId": "com.egyptianexchange.stocks",
@@ -28,7 +31,42 @@
     },
     "files": [
       "**/*",
-      "!node_modules/**/*"
-    ]
+      "!node_modules/**/*",
+      "!dist/**"
+    ],
+    "asar": true,
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "publish": {
+      "provider": "github",
+      "owner": "AMoussa77",
+      "repo": "The-Egyptian-Exchange"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        }
+      ],
+      "publisherName": "Egyptian Exchange Stocks",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.finance",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Finance",
+      "icon": "assets/icon.png"
+    }
   }
 }

@@ -498,6 +498,145 @@
                 font-size: 14px;
             }
         }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border-radius: 15px;
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: white;
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .modal-body {
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(149, 165, 166, 0.4);
+        }
+
+        .setting-item {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .setting-item label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #e0e0e0;
+        }
+
+        .setting-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .release-notes {
+            background: rgba(40, 40, 60, 0.5);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(40, 40, 60, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        #progressText {
+            text-align: center;
+            margin: 10px 0 0 0;
+            font-size: 0.9em;
+            color: #b0b0b0;
+        }
     </style>
 </head>
 <body>
@@ -508,6 +647,7 @@
             <div class="controls">
                 <button class="btn" onclick="refreshQueriesAndData()">🔄 Refresh</button>
                 <button class="btn" onclick="exportData()">📊 Export</button>
+                <button class="btn" onclick="showSettingsModal()">⚙️ Settings</button>
             </div>
         </div>
         <div class="header-right">
@@ -584,6 +724,60 @@
     <div class="column-toggle hidden" id="columnTogglePanel">
         <h3>📊 Column Visibility</h3>
         <div id="columnToggleList"></div>
+    </div>
+
+    <!-- Update Available Modal -->
+    <div id="updateModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔄 Update Available</h2>
+                <button class="close-btn" onclick="hideUpdateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="updateInfo">
+                    <p><strong>Version:</strong> <span id="updateVersion"></span></p>
+                    <p><strong>Release Notes:</strong></p>
+                    <div id="updateReleaseNotes" class="release-notes"></div>
+                    <p><strong>Release Date:</strong> <span id="updateReleaseDate"></span></p>
+                </div>
+                <div id="updateProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <p id="progressText">Downloading update...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="downloadUpdateBtn" class="btn" onclick="downloadUpdate()">📥 Download Update</button>
+                <button id="installUpdateBtn" class="btn" onclick="installUpdate()" style="display: none;">🚀 Install & Restart</button>
+                <button class="btn btn-secondary" onclick="hideUpdateModal()">Later</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings</h2>
+                <button class="close-btn" onclick="hideSettingsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="autoUpdateEnabled" checked>
+                        Enable automatic updates
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <button class="btn" onclick="checkForUpdates()">🔍 Check for Updates</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="saveSettings()">💾 Save Settings</button>
+                <button class="btn btn-secondary" onclick="hideSettingsModal()">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1173,6 +1367,132 @@
         ipcRenderer.on('stock-data-error', (event, error) => {
             showStatus('Error: ' + error, 'error');
         });
+
+        // Auto-updater event listeners
+        ipcRenderer.on('update-checking', () => {
+            console.log('Checking for updates...');
+        });
+
+        ipcRenderer.on('update-available', (event, info) => {
+            console.log('Update available:', info);
+            // Close settings modal if it's open
+            hideSettingsModal();
+            showUpdateAvailableModal(info);
+        });
+
+        ipcRenderer.on('update-not-available', (event, info) => {
+            console.log('No updates available:', info);
+            showStatus('You are using the latest version', 'info');
+        });
+
+        ipcRenderer.on('update-error', (event, error) => {
+            console.error('Update error:', error);
+            showStatus('Update error: ' + error, 'error');
+        });
+
+        ipcRenderer.on('update-download-progress', (event, progressObj) => {
+            updateDownloadProgress(progressObj);
+        });
+
+        ipcRenderer.on('update-downloaded', (event, info) => {
+            console.log('Update downloaded:', info);
+            showUpdateDownloaded();
+        });
+
+        // Update modal functions
+        function showUpdateAvailableModal(info) {
+            document.getElementById('updateVersion').textContent = info.version;
+            document.getElementById('updateReleaseNotes').textContent = info.releaseNotes || 'No release notes available';
+            document.getElementById('updateReleaseDate').textContent = new Date(info.releaseDate).toLocaleDateString();
+            
+            // Reset modal state
+            document.getElementById('updateInfo').style.display = 'block';
+            document.getElementById('updateProgress').style.display = 'none';
+            document.getElementById('downloadUpdateBtn').style.display = 'inline-block';
+            document.getElementById('installUpdateBtn').style.display = 'none';
+            
+            document.getElementById('updateModal').style.display = 'flex';
+        }
+
+        function hideUpdateModal() {
+            document.getElementById('updateModal').style.display = 'none';
+        }
+
+        function downloadUpdate() {
+            document.getElementById('updateInfo').style.display = 'none';
+            document.getElementById('updateProgress').style.display = 'block';
+            document.getElementById('downloadUpdateBtn').style.display = 'none';
+            
+            ipcRenderer.invoke('download-update').catch(error => {
+                console.error('Download error:', error);
+                showStatus('Download failed: ' + error.message, 'error');
+                hideUpdateModal();
+            });
+        }
+
+        function installUpdate() {
+            ipcRenderer.invoke('install-update');
+        }
+
+        function showUpdateDownloaded() {
+            document.getElementById('updateProgress').style.display = 'none';
+            document.getElementById('installUpdateBtn').style.display = 'inline-block';
+        }
+
+        function updateDownloadProgress(progressObj) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            const percent = Math.round(progressObj.percent);
+            progressFill.style.width = percent + '%';
+            
+            const downloaded = Math.round(progressObj.transferred / 1024 / 1024);
+            const total = Math.round(progressObj.total / 1024 / 1024);
+            const speed = Math.round(progressObj.bytesPerSecond / 1024 / 1024);
+            
+            progressText.textContent = `Downloading... ${downloaded}MB / ${total}MB (${speed}MB/s)`;
+        }
+
+        // Settings modal functions
+        function showSettingsModal() {
+            loadSettings();
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function hideSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        async function loadSettings() {
+            try {
+                const settings = await ipcRenderer.invoke('get-settings');
+                document.getElementById('autoUpdateEnabled').checked = settings.autoUpdate;
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        async function saveSettings() {
+            try {
+                const autoUpdateEnabled = document.getElementById('autoUpdateEnabled').checked;
+                await ipcRenderer.invoke('update-settings', { autoUpdate: autoUpdateEnabled });
+                showStatus('Settings saved successfully', 'success');
+                hideSettingsModal();
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showStatus('Error saving settings: ' + error.message, 'error');
+            }
+        }
+
+        async function checkForUpdates() {
+            try {
+                showStatus('Checking for updates...', 'info');
+                await ipcRenderer.invoke('check-for-updates');
+            } catch (error) {
+                console.error('Error checking for updates:', error);
+                showStatus('Error checking for updates: ' + error.message, 'error');
+            }
+        }
     </script>
 </body>
 </html>
