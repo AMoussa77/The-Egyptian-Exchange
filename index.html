@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Egyptian Exchange Stocks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .header {
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            font-size: 1.2em;
+            margin: 0 0 3px 0;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            color: #b0b0b0;
+            font-size: 0.8em;
+            margin: 0 0 8px 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 3px;
+        }
+
+
+        .btn {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(74, 144, 226, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 10px;
+            border-radius: 15px;
+        }
+
+        .btn-watchlist {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        }
+
+        .btn-watchlist:hover {
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-remove {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+        }
+
+        .btn-remove:hover {
+            box-shadow: 0 6px 20px rgba(149, 165, 166, 0.4);
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+            background: rgba(40, 40, 60, 0.3);
+            border-radius: 25px;
+            padding: 5px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab {
+            background: transparent;
+            color: #e0e0e0;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0 5px;
+        }
+
+        .tab.active {
+            background: rgba(74, 144, 226, 0.8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .status {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid rgba(46, 204, 113, 0.4);
+        }
+
+        .status.error {
+            background: rgba(231, 76, 60, 0.2);
+            color: #ff6b6b;
+            border: 1px solid rgba(231, 76, 60, 0.4);
+        }
+
+        .status.info {
+            background: rgba(74, 144, 226, 0.2);
+            color: #4a90e2;
+            border: 1px solid rgba(74, 144, 226, 0.4);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .search-input {
+            width: 300px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            background: rgba(40, 40, 60, 0.8);
+            color: #e0e0e0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            outline: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-input:focus {
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.3);
+            transform: translateY(-1px);
+            border-color: rgba(74, 144, 226, 0.5);
+        }
+
+        .search-input::placeholder {
+            color: #888;
+        }
+
+        .stocks-table {
+            background: rgba(30, 30, 50, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .table-header {
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s ease;
+            position: relative;
+        }
+
+        th:hover {
+            background: linear-gradient(45deg, #34495e, #2c3e50);
+        }
+
+        th.sortable {
+            padding-right: 25px;
+        }
+
+        th.sortable::after {
+            content: '↕';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        th.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+
+        th.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background-color 0.2s ease;
+            text-align: center;
+            color: #e0e0e0;
+        }
+
+        tr:hover {
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .price-positive {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+
+        .price-negative {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+
+        .price-neutral {
+            color: #b0b0b0;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #b0b0b0;
+        }
+
+        .spinner {
+            border: 4px solid rgba(74, 144, 226, 0.3);
+            border-top: 4px solid #4a90e2;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .last-updated {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            color: #b0b0b0;
+            font-size: 0.75em;
+            background: rgba(30, 30, 50, 0.9);
+            padding: 6px 12px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            font-weight: 500;
+        }
+
+        .last-updated.updating {
+            color: white;
+            background: rgba(74, 144, 226, 0.9);
+            border-color: rgba(74, 144, 226, 0.5);
+        }
+
+        .column-toggle {
+            position: fixed;
+            top: 100px;
+            right: 15px;
+            background: rgba(30, 30, 50, 0.95);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            max-width: 250px;
+            font-size: 0.85em;
+        }
+
+        .column-toggle h3 {
+            margin: 0 0 10px 0;
+            color: #ffffff;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .column-toggle-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            cursor: pointer;
+            padding: 3px 0;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+        }
+
+        .column-toggle-item:hover {
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .column-toggle-item input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .column-toggle-item label {
+            cursor: pointer;
+            flex: 1;
+            color: #e0e0e0;
+            font-size: 0.8em;
+        }
+
+        .column-toggle-toggle {
+            position: fixed;
+            top: 50px;
+            right: 15px;
+            background: rgba(30, 30, 50, 0.95);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1001;
+            font-size: 16px;
+            color: #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .column-toggle-toggle:hover {
+            background: rgba(74, 144, 226, 0.2);
+            transform: scale(1.05);
+        }
+
+        .column-toggle.hidden {
+            display: none;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .header-left, .header-right {
+                align-items: flex-start;
+            }
+            
+            .header h1 {
+                font-size: 1.1em;
+            }
+            
+            .header p {
+                font-size: 0.75em;
+            }
+            
+            .btn {
+                padding: 5px 10px;
+                font-size: 10px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .search-input {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px 5px;
+            }
+            
+            .last-updated {
+                top: 10px;
+                right: 10px;
+                font-size: 0.7em;
+                padding: 4px 8px;
+            }
+            
+            .column-toggle {
+                top: 90px;
+                right: 10px;
+                max-width: 200px;
+                font-size: 0.8em;
+            }
+            
+            .column-toggle-toggle {
+                top: 45px;
+                right: 10px;
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>🏛️ Egyptian Exchange Stocks</h1>
+            <p>Real-time stock data from Excel database</p>
+            <div class="controls">
+                <button class="btn" onclick="refreshQueriesAndData()">🔄 Refresh</button>
+                <button class="btn" onclick="exportData()">📊 Export</button>
+            </div>
+        </div>
+        <div class="header-right">
+            <!-- Timestamp removed to avoid duplication -->
+        </div>
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('all-stocks')">📈 All Stocks</button>
+            <button class="tab" onclick="switchTab('watchlist')">⭐ Watchlist</button>
+        </div>
+
+        <!-- All Stocks Tab -->
+        <div id="all-stocks" class="tab-content active">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search stocks..." onkeyup="filterStocks()">
+            </div>
+
+            <div class="stocks-table">
+                <div class="table-header">
+                    📈 Live Stock Data
+                </div>
+                <div class="table-container">
+                    <div id="loading" class="loading">
+                        <div class="spinner"></div>
+                        Loading stock data...
+                    </div>
+                    <table id="stocksTable" style="display: none;">
+                        <thead>
+                            <tr id="tableHeaders"></tr>
+                        </thead>
+                        <tbody id="stocksTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Watchlist Tab -->
+        <div id="watchlist" class="tab-content">
+            <div class="search-container">
+                <input type="text" id="watchlistSearchInput" class="search-input" placeholder="Search watchlist..." onkeyup="filterWatchlist()">
+            </div>
+
+            <div class="stocks-table">
+                <div class="table-header">
+                    ⭐ My Watchlist
+                </div>
+                <div class="table-container">
+                    <div id="watchlistLoading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        Loading watchlist...
+                    </div>
+                    <table id="watchlistTable" style="display: none;">
+                        <thead>
+                            <tr id="watchlistHeaders"></tr>
+                        </thead>
+                        <tbody id="watchlistTableBody"></tbody>
+                    </table>
+                    <div id="emptyWatchlist" class="loading">
+                        <p>⭐ Your watchlist is empty</p>
+                        <p>Add stocks from the "All Stocks" tab to start watching!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="last-updated" id="lastUpdated"></div>
+    </div>
+
+    <!-- Column Toggle UI -->
+    <button class="column-toggle-toggle" id="columnToggleBtn" onclick="toggleColumnPanel()">⚙️</button>
+    <div class="column-toggle hidden" id="columnTogglePanel">
+        <h3>📊 Column Visibility</h3>
+        <div id="columnToggleList"></div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        let allStocks = [];
+        let filteredStocks = [];
+        let watchlist = [];
+        let filteredWatchlist = [];
+        let currentSearchTerm = '';
+        let currentWatchlistSearchTerm = '';
+        let currentSortColumn = '';
+        let currentSortDirection = '';
+        let watchlistSortColumn = '';
+        let watchlistSortDirection = '';
+        let columnVisibility = {};
+        let availableColumns = [];
+
+        // Load initial data
+        window.addEventListener('DOMContentLoaded', async () => {
+            loadColumnVisibility();
+            await loadStockData();
+            loadWatchlist();
+            startAutoRefresh();
+        });
+
+        async function loadStockData() {
+            try {
+                const data = await ipcRenderer.invoke('get-stock-data');
+                
+                if (data && data.length > 0) {
+                    allStocks = data;
+                    // Preserve current search filter
+                    if (currentSearchTerm) {
+                        filteredStocks = allStocks.filter(stock => {
+                            return Object.values(stock).some(value => 
+                                String(value).toLowerCase().includes(currentSearchTerm.toLowerCase())
+                            );
+                        });
+                    } else {
+                        filteredStocks = [...allStocks];
+                    }
+                    
+                    // Reapply sorting if there's an active sort
+                    if (currentSortColumn) {
+                        filteredStocks = sortData([...filteredStocks], currentSortColumn, currentSortDirection);
+                    }
+                    
+                    initializeColumnVisibility();
+                    displayStocks();
+                    updateLastUpdated();
+                } else {
+                    showStatus('No stock data found. Please check the Excel file.', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading stock data:', error);
+                showStatus('Error loading stock data: ' + error.message, 'error');
+            }
+        }
+
+        function loadWatchlist() {
+            const savedWatchlist = localStorage.getItem('egyptianStocksWatchlist');
+            if (savedWatchlist) {
+                try {
+                    watchlist = JSON.parse(savedWatchlist);
+                    filteredWatchlist = [...watchlist];
+                    
+                    // Reapply sorting if there's an active sort
+                    if (watchlistSortColumn) {
+                        filteredWatchlist = sortData([...filteredWatchlist], watchlistSortColumn, watchlistSortDirection);
+                    }
+                    
+                    displayWatchlist();
+                    console.log('Watchlist loaded:', watchlist.length, 'stocks');
+                } catch (error) {
+                    console.error('Error loading watchlist:', error);
+                    watchlist = [];
+                    filteredWatchlist = [];
+                }
+            } else {
+                watchlist = [];
+                filteredWatchlist = [];
+            }
+        }
+
+        function saveWatchlist() {
+            try {
+                localStorage.setItem('egyptianStocksWatchlist', JSON.stringify(watchlist));
+                console.log('Watchlist saved:', watchlist.length, 'stocks');
+            } catch (error) {
+                console.error('Error saving watchlist:', error);
+            }
+        }
+
+        function loadColumnVisibility() {
+            const saved = localStorage.getItem('egyptianStocksColumnVisibility');
+            if (saved) {
+                try {
+                    columnVisibility = JSON.parse(saved);
+                } catch (error) {
+                    console.error('Error loading column visibility:', error);
+                    columnVisibility = {};
+                }
+            }
+        }
+
+        function saveColumnVisibility() {
+            try {
+                localStorage.setItem('egyptianStocksColumnVisibility', JSON.stringify(columnVisibility));
+            } catch (error) {
+                console.error('Error saving column visibility:', error);
+            }
+        }
+
+        function initializeColumnVisibility() {
+            if (allStocks.length > 0) {
+                availableColumns = Object.keys(allStocks[0]);
+                
+                // Initialize visibility for new columns (default: visible)
+                availableColumns.forEach(column => {
+                    if (columnVisibility[column] === undefined) {
+                        columnVisibility[column] = true;
+                    }
+                });
+                
+                // Remove columns that no longer exist
+                Object.keys(columnVisibility).forEach(column => {
+                    if (!availableColumns.includes(column)) {
+                        delete columnVisibility[column];
+                    }
+                });
+                
+                saveColumnVisibility();
+                updateColumnToggleUI();
+            }
+        }
+
+        function updateColumnToggleUI() {
+            const toggleList = document.getElementById('columnToggleList');
+            if (!toggleList || availableColumns.length === 0) return;
+            
+            toggleList.innerHTML = availableColumns.map(column => {
+                const isVisible = columnVisibility[column] !== false;
+                return `
+                    <div class="column-toggle-item">
+                        <input type="checkbox" id="col-${column}" ${isVisible ? 'checked' : ''} 
+                               onchange="toggleColumn('${column}', this.checked)">
+                        <label for="col-${column}">${column}</label>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleColumn(column, visible) {
+            columnVisibility[column] = visible;
+            saveColumnVisibility();
+            displayStocks();
+            displayWatchlist();
+        }
+
+        function toggleColumnPanel() {
+            const panel = document.getElementById('columnTogglePanel');
+            const btn = document.getElementById('columnToggleBtn');
+            
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                btn.style.background = 'rgba(52, 152, 219, 0.2)';
+            } else {
+                panel.classList.add('hidden');
+                btn.style.background = 'rgba(255, 255, 255, 0.95)';
+            }
+        }
+
+        function sortData(data, column, direction) {
+            return data.sort((a, b) => {
+                let aVal = a[column] || '';
+                let bVal = b[column] || '';
+                
+                // Try to parse as numbers for numeric columns
+                const aNum = parseFloat(aVal);
+                const bNum = parseFloat(bVal);
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    // Numeric comparison
+                    return direction === 'asc' ? aNum - bNum : bNum - aNum;
+                } else {
+                    // String comparison
+                    aVal = String(aVal).toLowerCase();
+                    bVal = String(bVal).toLowerCase();
+                    
+                    if (direction === 'asc') {
+                        return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                    } else {
+                        return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+                    }
+                }
+            });
+        }
+
+        function sortStocks(column) {
+            // Determine sort direction
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+            
+            // Sort the filtered stocks
+            filteredStocks = sortData([...filteredStocks], column, currentSortDirection);
+            displayStocks();
+        }
+
+        function sortWatchlist(column) {
+            // Determine sort direction
+            if (watchlistSortColumn === column) {
+                watchlistSortDirection = watchlistSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                watchlistSortColumn = column;
+                watchlistSortDirection = 'asc';
+            }
+            
+            // Sort the filtered watchlist
+            filteredWatchlist = sortData([...filteredWatchlist], column, watchlistSortDirection);
+            displayWatchlist();
+        }
+
+        function displayStocks() {
+            const table = document.getElementById('stocksTable');
+            const tableBody = document.getElementById('stocksTableBody');
+            const tableHeaders = document.getElementById('tableHeaders');
+            const loading = document.getElementById('loading');
+
+            if (filteredStocks.length === 0) {
+                loading.innerHTML = '<div class="spinner"></div>No stocks found matching your search.';
+                loading.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            // Create headers with action column (only visible columns)
+            const allHeaders = Object.keys(filteredStocks[0]);
+            const visibleHeaders = allHeaders.filter(header => columnVisibility[header] !== false);
+            
+            tableHeaders.innerHTML = visibleHeaders.map(header => {
+                let sortClass = 'sortable';
+                if (currentSortColumn === header) {
+                    sortClass += ` sort-${currentSortDirection}`;
+                }
+                return `<th class="${sortClass}" onclick="sortStocks('${header}')">${header}</th>`;
+            }).join('') + '<th>Action</th>';
+
+            // Create rows (only visible columns)
+            tableBody.innerHTML = filteredStocks.map((stock, index) => {
+                const row = visibleHeaders.map(header => {
+                    let value = stock[header] || '';
+                    let className = '';
+                    
+                    // Style based on column content
+                    if (header === 'أخر_سعر' || header === 'Last Price') {
+                        className = 'price-neutral';
+                    } else if (header === '%التغيير' || header === 'Changes %') {
+                        const numValue = parseFloat(value);
+                        if (numValue > 0) className = 'price-positive';
+                        else if (numValue < 0) className = 'price-negative';
+                        else className = 'price-neutral';
+                    }
+                    
+                    return `<td class="${className}">${value}</td>`;
+                }).join('');
+                
+                // Check if stock is already in watchlist
+                const isInWatchlist = watchlist.some(w => JSON.stringify(w) === JSON.stringify(stock));
+                const actionButton = isInWatchlist 
+                    ? `<button class="btn btn-small btn-remove" onclick="removeFromWatchlistByIndex(${index})">Remove</button>`
+                    : `<button class="btn btn-small btn-watchlist" onclick="addToWatchlistByIndex(${index})">Add</button>`;
+                
+                return `<tr>${row}<td>${actionButton}</td></tr>`;
+            }).join('');
+
+            loading.style.display = 'none';
+            table.style.display = 'table';
+        }
+
+        function displayWatchlist() {
+            const table = document.getElementById('watchlistTable');
+            const tableBody = document.getElementById('watchlistTableBody');
+            const tableHeaders = document.getElementById('watchlistHeaders');
+            const emptyWatchlist = document.getElementById('emptyWatchlist');
+
+            if (filteredWatchlist.length === 0) {
+                emptyWatchlist.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            emptyWatchlist.style.display = 'none';
+
+            // Create headers with action column (only visible columns)
+            const allHeaders = Object.keys(filteredWatchlist[0]);
+            const visibleHeaders = allHeaders.filter(header => columnVisibility[header] !== false);
+            
+            tableHeaders.innerHTML = visibleHeaders.map(header => {
+                let sortClass = 'sortable';
+                if (watchlistSortColumn === header) {
+                    sortClass += ` sort-${watchlistSortDirection}`;
+                }
+                return `<th class="${sortClass}" onclick="sortWatchlist('${header}')">${header}</th>`;
+            }).join('') + '<th>Action</th>';
+
+            // Create rows (only visible columns)
+            tableBody.innerHTML = filteredWatchlist.map((stock, index) => {
+                const row = visibleHeaders.map(header => {
+                    let value = stock[header] || '';
+                    let className = '';
+                    
+                    // Style based on column content
+                    if (header === 'أخر_سعر' || header === 'Last Price') {
+                        className = 'price-neutral';
+                    } else if (header === '%التغيير' || header === 'Changes %') {
+                        const numValue = parseFloat(value);
+                        if (numValue > 0) className = 'price-positive';
+                        else if (numValue < 0) className = 'price-negative';
+                        else className = 'price-neutral';
+                    }
+                    
+                    return `<td class="${className}">${value}</td>`;
+                }).join('');
+                
+                const actionButton = `<button class="btn btn-small btn-remove" onclick="removeFromWatchlistByWatchlistIndex(${index})">Remove</button>`;
+                
+                return `<tr>${row}<td>${actionButton}</td></tr>`;
+            }).join('');
+
+            table.style.display = 'table';
+        }
+
+        function filterStocks() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            currentSearchTerm = searchTerm;
+            filteredStocks = allStocks.filter(stock => {
+                return Object.values(stock).some(value => 
+                    String(value).toLowerCase().includes(searchTerm)
+                );
+            });
+            
+            // Reapply sorting if there's an active sort
+            if (currentSortColumn) {
+                filteredStocks = sortData([...filteredStocks], currentSortColumn, currentSortDirection);
+            }
+            
+            displayStocks();
+        }
+
+        function filterWatchlist() {
+            const searchTerm = document.getElementById('watchlistSearchInput').value.toLowerCase();
+            currentWatchlistSearchTerm = searchTerm;
+            filteredWatchlist = watchlist.filter(stock => {
+                return Object.values(stock).some(value => 
+                    String(value).toLowerCase().includes(searchTerm)
+                );
+            });
+            
+            // Reapply sorting if there's an active sort
+            if (watchlistSortColumn) {
+                filteredWatchlist = sortData([...filteredWatchlist], watchlistSortColumn, watchlistSortDirection);
+            }
+            
+            displayWatchlist();
+        }
+
+        function addToWatchlistByIndex(index) {
+            try {
+                const stock = filteredStocks[index];
+                if (!stock) {
+                    showStatus('Stock not found', 'error');
+                    return;
+                }
+                
+                // Check if already exists
+                const exists = watchlist.some(w => JSON.stringify(w) === JSON.stringify(stock));
+                if (!exists) {
+                    watchlist.push(stock);
+                    saveWatchlist();
+                    displayStocks(); // Refresh to update button states
+                    showStatus('Stock added to watchlist', 'success');
+                } else {
+                    showStatus('Stock already in watchlist', 'info');
+                }
+            } catch (error) {
+                console.error('Error adding to watchlist:', error);
+                showStatus('Error adding to watchlist', 'error');
+            }
+        }
+
+        function removeFromWatchlistByIndex(index) {
+            try {
+                const stock = filteredStocks[index];
+                if (!stock) {
+                    showStatus('Stock not found', 'error');
+                    return;
+                }
+                
+                // Remove from main watchlist
+                watchlist = watchlist.filter(w => JSON.stringify(w) !== JSON.stringify(stock));
+                
+                // Update filtered watchlist if it contains the removed stock
+                filteredWatchlist = filteredWatchlist.filter(w => JSON.stringify(w) !== JSON.stringify(stock));
+                
+                // Reapply sorting if there's an active sort
+                if (watchlistSortColumn) {
+                    filteredWatchlist = sortData([...filteredWatchlist], watchlistSortColumn, watchlistSortDirection);
+                }
+                
+                saveWatchlist();
+                displayWatchlist();
+                displayStocks(); // Refresh to update button states
+                showStatus('Stock removed from watchlist', 'success');
+            } catch (error) {
+                console.error('Error removing from watchlist:', error);
+                showStatus('Error removing from watchlist', 'error');
+            }
+        }
+
+        function removeFromWatchlistByWatchlistIndex(index) {
+            try {
+                const stock = filteredWatchlist[index];
+                if (!stock) {
+                    showStatus('Stock not found', 'error');
+                    return;
+                }
+                
+                // Remove from main watchlist
+                watchlist = watchlist.filter(w => JSON.stringify(w) !== JSON.stringify(stock));
+                
+                // Update filtered watchlist
+                filteredWatchlist = filteredWatchlist.filter(w => JSON.stringify(w) !== JSON.stringify(stock));
+                
+                // Reapply sorting if there's an active sort
+                if (watchlistSortColumn) {
+                    filteredWatchlist = sortData([...filteredWatchlist], watchlistSortColumn, watchlistSortDirection);
+                }
+                
+                saveWatchlist();
+                displayWatchlist();
+                displayStocks(); // Refresh to update button states
+                showStatus('Stock removed from watchlist', 'success');
+            } catch (error) {
+                console.error('Error removing from watchlist:', error);
+                showStatus('Error removing from watchlist', 'error');
+            }
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+
+            // Refresh watchlist when switching to it
+            if (tabName === 'watchlist') {
+                loadWatchlist();
+            }
+        }
+
+
+        async function refreshQueriesAndData() {
+            try {
+                showUpdating();
+                const data = await ipcRenderer.invoke('refresh-queries-and-data');
+                allStocks = data;
+                
+                // Preserve current search filter
+                if (currentSearchTerm) {
+                    filteredStocks = allStocks.filter(stock => {
+                        return Object.values(stock).some(value => 
+                            String(value).toLowerCase().includes(currentSearchTerm.toLowerCase())
+                        );
+                    });
+                } else {
+                    filteredStocks = [...allStocks];
+                }
+                
+                // Reapply sorting if there's an active sort
+                if (currentSortColumn) {
+                    filteredStocks = sortData([...filteredStocks], currentSortColumn, currentSortDirection);
+                }
+                
+                displayStocks();
+                updateLastUpdated();
+            } catch (error) {
+                showStatus('Error refreshing data: ' + error.message, 'error');
+            }
+        }
+
+        function exportData() {
+            const csvContent = convertToCSV(filteredStocks);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'egyptian_stocks.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showStatus('Data exported successfully', 'success');
+        }
+
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]);
+            const csvRows = [headers.join(',')];
+            
+            data.forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header] || '';
+                    return `"${value.toString().replace(/"/g, '""')}"`;
+                });
+                csvRows.push(values.join(','));
+            });
+            
+            return csvRows.join('\n');
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            const lastUpdatedElement = document.getElementById('lastUpdated');
+            
+            const timestamp = now.toLocaleString();
+            lastUpdatedElement.textContent = `Last updated: ${timestamp}`;
+            
+            lastUpdatedElement.classList.remove('updating');
+        }
+
+        function showUpdating() {
+            const lastUpdatedElement = document.getElementById('lastUpdated');
+            lastUpdatedElement.textContent = 'Updating data...';
+            lastUpdatedElement.classList.add('updating');
+        }
+
+        function startAutoRefresh() {
+            // Auto-refresh every 30 seconds with query refresh
+            setInterval(() => {
+                refreshQueriesAndData();
+            }, 30000);
+        }
+
+        // Listen for real-time updates from main process
+        ipcRenderer.on('stock-data-updated', (event, data) => {
+            allStocks = data;
+            
+            // Preserve current search filter
+            if (currentSearchTerm) {
+                filteredStocks = allStocks.filter(stock => {
+                    return Object.values(stock).some(value => 
+                        String(value).toLowerCase().includes(currentSearchTerm.toLowerCase())
+                    );
+                });
+            } else {
+                filteredStocks = [...allStocks];
+            }
+            
+            // Reapply sorting if there's an active sort
+            if (currentSortColumn) {
+                filteredStocks = sortData([...filteredStocks], currentSortColumn, currentSortDirection);
+            }
+            
+            displayStocks();
+            updateLastUpdated();
+        });
+
+        ipcRenderer.on('stock-data-error', (event, error) => {
+            showStatus('Error: ' + error, 'error');
+        });
+    </script>
+</body>
+</html>

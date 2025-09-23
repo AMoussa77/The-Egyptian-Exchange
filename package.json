@@ -1,0 +1,34 @@
+{
+  "name": "egyptian-exchange-stocks",
+  "version": "1.0.0",
+  "description": "Desktop application for Egyptian Exchange stocks with real-time data from Excel",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder"
+  },
+  "keywords": ["stocks", "egyptian-exchange", "desktop", "electron"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5",
+    "chokidar": "^3.5.3",
+    "node-ole": "^1.0.0"
+  },
+  "build": {
+    "appId": "com.egyptianexchange.stocks",
+    "productName": "Egyptian Exchange Stocks",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*"
+    ]
+  }
+}
