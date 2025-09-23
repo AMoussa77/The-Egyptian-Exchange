@@ -376,7 +376,7 @@ function checkForUpdatesManual() {
         console.log('🔍 Simulated update check completed');
         // Simulate finding an update
         const mockUpdateInfo = {
-          version: '1.0.1',
+          version: '0.5.1',
           releaseNotes: 'Test update for development - Egyptian Exchange Stocks',
           releaseDate: new Date().toISOString()
         };
@@ -407,7 +407,7 @@ ipcMain.handle('download-update', () => {
     return new Promise((resolve) => {
       setTimeout(() => {
         console.log('✅ Simulated download completed');
-        const mockInfo = { version: '1.0.1' };
+        const mockInfo = { version: '0.5.1' };
         if (mainWindow) {
           mainWindow.webContents.send('update-downloaded', mockInfo);
         }

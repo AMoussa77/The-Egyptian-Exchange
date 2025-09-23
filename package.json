@@ -1,6 +1,6 @@
 {
   "name": "egyptian-exchange-stocks",
-  "version": "1.0.0",
+  "version": "0.5.0",
   "description": "Desktop application for Egyptian Exchange stocks with real-time data from Excel",
   "main": "main.js",
   "scripts": {
