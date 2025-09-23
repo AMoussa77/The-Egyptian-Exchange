@@ -1,0 +1,67 @@
+name: Build and Release Egyptian Exchange Stocks
+# GitHub Actions workflow for building and releasing The Egyptian Exchange desktop application
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Egyptian-Exchange-Stocks-${{ matrix.os }}-${{ github.sha }}
+        path: dist/
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/*
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+        tag_name: ${{ github.ref_name }}
+        name: Egyptian Exchange Stocks ${{ github.ref_name }}
+        body: |
+          ## Egyptian Exchange Stocks Desktop Application
+          
+          This release contains the Egyptian Exchange Stocks desktop application for ${{ matrix.os }}.
+          
+          ### Features
+          - Real-time stock data from Excel files
+          - Cross-platform desktop application
+          - Egyptian Exchange market data tracking
+          
+          ### Installation
+          Download the appropriate installer for your operating system from the assets below.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
