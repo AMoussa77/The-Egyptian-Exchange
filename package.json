@@ -1,6 +1,6 @@
 {
   "name": "egyptian-exchange-stocks",
-  "version": "0.6.0",
+  "version": "0.6.2",
   "description": "Desktop application for Egyptian Exchange stocks with real-time data from web scraping",
   "main": "main.js",
   "scripts": {
@@ -26,6 +26,7 @@
   "dependencies": {
     "axios": "^1.12.2",
     "cheerio": "^1.1.2",
+    "electron-log": "^5.4.3",
     "electron-updater": "^6.1.7"
   },
   "build": {
@@ -46,14 +47,16 @@
       "!**/{appveyor.yml,.travis.yml,circle.yml}",
       "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
       "!Stocks.xlsx",
-      "node_modules/axios/**/*"
+      "node_modules/axios/**/*",
+      "node_modules/electron-log/**/*"
     ],
     "asarUnpack": [
       "node_modules/electron-updater/**/*",
-      "node_modules/axios/**/*"
+      "node_modules/axios/**/*",
+      "node_modules/electron-log/**/*"
     ],
     "asar": true,
-    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "artifactName": "${productName}-${version}.${ext}",
     "publish": {
       "provider": "github",
       "owner": "AMoussa77",
@@ -64,8 +67,7 @@
         {
           "target": "nsis",
           "arch": [
-            "x64",
-            "ia32"
+            "x64"
           ]
         }
       ],
@@ -77,7 +79,8 @@
       "perMachine": false,
       "allowElevation": true,
       "allowToChangeInstallationDirectory": false,
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "${productName}-${version}.${ext}"
     },
     "mac": {
       "target": [

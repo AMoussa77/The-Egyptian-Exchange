@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
+const log = require('electron-log');
 let autoUpdater;
 try {
   // Try to load from normal node_modules first
@@ -158,6 +159,11 @@ autoUpdater.setFeedURL({
   owner: 'AMoussa77',
   repo: 'The-Egyptian-Exchange'
 });
+
+// Configure electron-log for auto-updater debugging
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = 'info';
+log.info('Auto-updater logger configured');
 
 if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
   console.log('🚀 Auto-updater enabled');
@@ -388,6 +394,14 @@ autoUpdater.on('error', (err) => {
   console.error('📦 App is packaged:', app.isPackaged);
   console.error('🔗 Feed URL configured for: AMoussa77/The-Egyptian-Exchange');
   console.error('📋 Current version:', app.getVersion());
+  console.error('❌ Error details:', err.message, err.code);
+  
+  // Handle specific download errors
+  if (err.message.includes('404') || err.message.includes('blockmap')) {
+    console.error('🚨 Blockmap/File naming issue detected!');
+    console.error('💡 This usually means the .exe and .exe.blockmap files have different names');
+    console.error('💡 Check GitHub releases for consistent file naming');
+  }
   
   if (mainWindow) {
     mainWindow.webContents.send('update-error', err.message);
@@ -557,9 +571,9 @@ function checkForUpdatesManual() {
       setTimeout(() => {
         console.log('✅ Simulated update check completed');
         
-        // Simulate finding a newer version (since there's v0.6.1 on GitHub)
+        // Simulate finding a newer version (since there's v0.6.2 on GitHub)
         const mockUpdateInfo = {
-          version: '0.6.1',
+          version: '0.6.2',
           releaseNotes: 'Development mode simulation - Egyptian Exchange Stocks',
           releaseDate: new Date().toISOString()
         };
@@ -623,16 +637,27 @@ ipcMain.handle('check-for-updates', async () => {
 
 ipcMain.handle('download-update', async () => {
   console.log('Download update triggered');
+  log.info('Download update triggered');
   
   if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
     // Production mode - try auto-updater with timeout
     console.log('🏭 Production mode: Starting download via auto-updater');
+    log.info('Production mode: Starting download via auto-updater');
     
     try {
       // Check if auto-updater is available
       if (!autoUpdater || typeof autoUpdater.downloadUpdate !== 'function') {
-        throw new Error('Auto-updater not available');
+        const error = new Error('Auto-updater not available');
+        log.error('Auto-updater not available:', error);
+        throw error;
       }
+      
+      // Log current configuration
+      log.info('Auto-updater configuration:', {
+        feedURL: 'https://github.com/AMoussa77/The-Egyptian-Exchange/releases',
+        currentVersion: app.getVersion(),
+        isPackaged: app.isPackaged
+      });
       
       // Add timeout to prevent hanging
       const downloadPromise = autoUpdater.downloadUpdate();
@@ -642,9 +667,20 @@ ipcMain.handle('download-update', async () => {
       
       await Promise.race([downloadPromise, timeoutPromise]);
       console.log('✅ Download completed via auto-updater');
+      log.info('Download completed via auto-updater');
       
     } catch (error) {
       console.error('❌ Auto-updater download failed:', error);
+      log.error('Auto-updater download failed:', error);
+      
+      // Check for specific error types
+      if (error.message.includes('404')) {
+        log.error('404 error detected - likely file naming issue');
+        console.error('🚨 404 error - check file naming in GitHub release');
+      } else if (error.message.includes('blockmap')) {
+        log.error('Blockmap error detected - file mismatch');
+        console.error('🚨 Blockmap error - .exe and .exe.blockmap names don\'t match');
+      }
       
       // Send error to UI
       if (mainWindow) {
@@ -673,7 +709,7 @@ ipcMain.handle('download-update', async () => {
         if (progress >= 100) {
           clearInterval(interval);
           console.log('✅ Simulated download completed');
-          const mockInfo = { version: '0.6.1' }; // Updated to 0.6.1
+          const mockInfo = { version: '0.6.2' }; // Updated to 0.6.2
           if (mainWindow) {
             mainWindow.webContents.send('update-downloaded', mockInfo);
           }
