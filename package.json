@@ -1,6 +1,6 @@
 {
   "name": "egyptian-exchange-stocks",
-  "version": "0.6.1",
+  "version": "0.6.0",
   "description": "Desktop application for Egyptian Exchange stocks with real-time data from web scraping",
   "main": "main.js",
   "scripts": {
@@ -45,12 +45,12 @@
       "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
       "!**/{appveyor.yml,.travis.yml,circle.yml}",
       "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
-      "!Stocks.xlsx"
+      "!Stocks.xlsx",
+      "node_modules/axios/**/*"
     ],
     "asarUnpack": [
       "node_modules/electron-updater/**/*",
-      "node_modules/axios/**/*",
-      "node_modules/cheerio/**/*"
+      "node_modules/axios/**/*"
     ],
     "asar": true,
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
@@ -101,10 +101,6 @@
       {
         "from": "node_modules/axios",
         "to": "axios"
-      },
-      {
-        "from": "node_modules/cheerio",
-        "to": "cheerio"
       }
     ]
   }

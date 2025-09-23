@@ -15,11 +15,98 @@ try {
     console.log('✅ Axios loaded successfully from extraResources');
   } catch (fallbackError) {
     console.error('Failed to load axios from extraResources:', fallbackError.message);
-    // Mock axios for graceful degradation
-    axios = {
-      get: () => Promise.reject(new Error('Axios not available - using mock data'))
-    };
-    console.log('⚠️ Using mock axios');
+    try {
+      // Try loading from asar unpacked
+      const path = require('path');
+      const axiosPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'axios');
+      axios = require(axiosPath);
+      console.log('✅ Axios loaded successfully from asar unpacked');
+    } catch (asarError) {
+      console.error('Failed to load axios from asar unpacked:', asarError.message);
+      try {
+        // Try using Node.js built-in https module as fallback
+        const https = require('https');
+        const http = require('http');
+        const { URL } = require('url');
+        
+        axios = {
+          get: (url, options = {}) => {
+            return new Promise((resolve, reject) => {
+              const makeRequest = (targetUrl, redirectCount = 0) => {
+                if (redirectCount > 5) {
+                  reject(new Error('Too many redirects'));
+                  return;
+                }
+                
+                const urlObj = new URL(targetUrl);
+                const protocol = urlObj.protocol === 'https:' ? https : http;
+                
+                const requestOptions = {
+                  hostname: urlObj.hostname,
+                  port: urlObj.port || (urlObj.protocol === 'https:' ? 443 : 80),
+                  path: urlObj.pathname + urlObj.search,
+                  method: 'GET',
+                  headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'Connection': 'keep-alive',
+                    ...options.headers
+                  }
+                };
+                
+                const req = protocol.request(requestOptions, (res) => {
+                  // Handle redirects
+                  if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                    const redirectUrl = new URL(res.headers.location, targetUrl).href;
+                    console.log(`🔄 Redirecting to: ${redirectUrl}`);
+                    makeRequest(redirectUrl, redirectCount + 1);
+                    return;
+                  }
+                  
+                  let data = '';
+                  
+                  res.on('data', (chunk) => {
+                    data += chunk;
+                  });
+                  
+                  res.on('end', () => {
+                    resolve({
+                      status: res.statusCode,
+                      data: data,
+                      headers: res.headers
+                    });
+                  });
+                });
+                
+                req.on('error', (err) => {
+                  reject(err);
+                });
+                
+                req.setTimeout(options.timeout || 15000, () => {
+                  req.destroy();
+                  reject(new Error('Request timeout'));
+                });
+                
+                req.end();
+              };
+              
+              makeRequest(url);
+            });
+          }
+        };
+        
+        console.log('✅ Using Node.js built-in HTTP module as axios fallback');
+      } catch (httpError) {
+        console.error('Failed to create HTTP fallback:', httpError.message);
+        // Mock axios for graceful degradation
+        axios = {
+          get: () => Promise.reject(new Error('Axios not available - using mock data'))
+        };
+        console.log('⚠️ Using mock axios');
+      }
+    }
   }
 }
 
@@ -69,15 +156,17 @@ class EgyptianExchangeScraper {
   async fetchStockData() {
     try {
       // Check if axios is available
-      if (!axios) {
-        console.log('⚠️ Axios not available, using mock data');
+      if (!axios || typeof axios.get !== 'function') {
+        console.log('⚠️ Axios not available or invalid, using mock data');
+        console.log('Axios type:', typeof axios);
         return this.getMockData();
       }
 
       console.log('🌐 Fetching stock data from Egyptian Exchange website...');
+      console.log('🌐 URL:', this.baseUrl);
       
       const response = await axios.get(this.baseUrl, {
-        timeout: 10000,
+        timeout: 15000, // Increased timeout
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -87,6 +176,9 @@ class EgyptianExchangeScraper {
         }
       });
 
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response data length:', response.data ? response.data.length : 0);
+
       // Use simple regex parsing instead of cheerio
       const html = response.data;
       const stockData = this.parseHTMLWithRegex(html);
@@ -95,12 +187,13 @@ class EgyptianExchangeScraper {
         console.log(`✅ Successfully scraped ${stockData.length} stocks from website`);
         return stockData;
       } else {
-        console.log('⚠️ No stock data found, using mock data');
+        console.log('⚠️ No stock data found in parsed HTML, using mock data');
         return this.getMockData();
       }
 
     } catch (error) {
       console.error('❌ Error fetching stock data from website:', error.message);
+      console.error('❌ Error details:', error);
       
       // Return mock data if scraping fails
       return this.getMockData();
@@ -111,15 +204,19 @@ class EgyptianExchangeScraper {
     try {
       const stockData = [];
       
+      console.log('🔍 Parsing HTML with regex...');
+      console.log('📄 HTML length:', html ? html.length : 0);
+      
       // Extract table rows using regex
       const tableRowRegex = /<tr[^>]*>(.*?)<\/tr>/gs;
       const cellRegex = /<td[^>]*>(.*?)<\/td>/gs;
-      const linkRegex = /<a[^>]*>(.*?)<\/a>/gs;
       
       let match;
       let rowIndex = 0;
+      let totalRows = 0;
       
       while ((match = tableRowRegex.exec(html)) !== null) {
+        totalRows++;
         if (rowIndex === 0) {
           rowIndex++;
           continue; // Skip header row
@@ -168,6 +265,8 @@ class EgyptianExchangeScraper {
         
         rowIndex++;
       }
+      
+      console.log(`📊 Parsed ${totalRows} total rows, found ${stockData.length} valid stocks`);
       
       return stockData;
       

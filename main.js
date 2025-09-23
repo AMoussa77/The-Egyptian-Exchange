@@ -148,30 +148,36 @@ function saveSettings() {
 }
 
 // Configure auto-updater
-// Enable auto-updater in production (packaged) mode or when forced
+// Always enable auto-updater, but with different behaviors for dev vs production
+autoUpdater.autoDownload = false; // Manual download control
+autoUpdater.autoInstallOnAppQuit = true;
+
+// Set the feed URL for GitHub releases
+autoUpdater.setFeedURL({
+  provider: 'github',
+  owner: 'AMoussa77',
+  repo: 'The-Egyptian-Exchange'
+});
+
 if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
-  autoUpdater.autoDownload = false; // Manual download control
-  autoUpdater.autoInstallOnAppQuit = true;
-  
   console.log('🚀 Auto-updater enabled');
   console.log('📦 App is packaged:', app.isPackaged);
   console.log('🔧 Environment:', process.env.ENABLE_AUTO_UPDATER);
   console.log('📋 Current version:', app.getVersion());
+  console.log('🔗 GitHub repo: AMoussa77/The-Egyptian-Exchange');
   
-  // Force enable auto-updater for testing
-  if (process.env.ENABLE_AUTO_UPDATER === 'true') {
-    console.log('🧪 Testing mode: Forcing auto-updater to work');
-    // Set the feed URL to force update checking
-    autoUpdater.setFeedURL({
-      provider: 'github',
-      owner: 'AMoussa77',
-      repo: 'The-Egyptian-Exchange'
-    });
+  // Check for updates on app start in production mode
+  if (app.isPackaged) {
+    console.log('🏭 Production mode: Checking for updates on startup...');
+    setTimeout(() => {
+      checkForUpdatesOnStartup();
+    }, 5000); // Check after 5 seconds to let the app fully load
   }
 } else {
-  console.log('🧪 Development mode: Auto-updater disabled for automatic checks');
-  console.log('💡 Manual update checks will work with simulated updates');
-  console.log('💡 To enable real auto-updater, set ENABLE_AUTO_UPDATER=true');
+  console.log('🧪 Development mode: Auto-updater enabled for testing');
+  console.log('💡 Real update checks will work with GitHub releases');
+  console.log('📋 Current version:', app.getVersion());
+  console.log('🔗 GitHub repo: AMoussa77/The-Egyptian-Exchange');
 }
 
 function createWindow() {
@@ -189,18 +195,31 @@ function createWindow() {
     },
     icon: path.join(__dirname, 'assets/icon.png'), // Optional icon
     title: 'Egyptian Exchange Stocks',
-    autoHideMenuBar: true // Hide the menu bar
+    autoHideMenuBar: true, // Hide the menu bar
+    center: true, // Center the window on screen
+    show: false // Don't show until ready
   };
   
-  // Add position if saved
-  if (settings.windowBounds.x !== undefined && settings.windowBounds.y !== undefined) {
+  // Add position if saved (and valid)
+  if (settings.windowBounds.x !== undefined && settings.windowBounds.y !== undefined && 
+      settings.windowBounds.x >= 0 && settings.windowBounds.y >= 0 &&
+      settings.windowBounds.x < 4000 && settings.windowBounds.y < 4000) { // Reasonable bounds check
     windowOptions.x = settings.windowBounds.x;
     windowOptions.y = settings.windowBounds.y;
+    windowOptions.center = false; // Don't center if we have a saved position
+    console.log('📍 Restoring window position:', settings.windowBounds.x, settings.windowBounds.y);
+  } else {
+    console.log('📍 No valid saved position, centering window');
   }
   
   mainWindow = new BrowserWindow(windowOptions);
 
   mainWindow.loadFile('index.html');
+
+  // Show window when ready
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
 
   // Open DevTools in development
   if (process.argv.includes('--dev')) {
@@ -212,22 +231,29 @@ function createWindow() {
     await initializeWebScraper();
     
     // Send a signal to the UI that data is ready
+    console.log('📡 Sending data-ready signal to UI');
     mainWindow.webContents.send('data-ready');
   });
   
   // Save window bounds when window is moved or resized
   mainWindow.on('moved', () => {
     const bounds = mainWindow.getBounds();
-    settings.windowBounds.x = bounds.x;
-    settings.windowBounds.y = bounds.y;
-    saveSettings();
+    if (bounds.x >= 0 && bounds.y >= 0 && bounds.x < 4000 && bounds.y < 4000) {
+      settings.windowBounds.x = bounds.x;
+      settings.windowBounds.y = bounds.y;
+      console.log('📍 Window moved, saving position:', bounds.x, bounds.y);
+      saveSettings();
+    }
   });
   
   mainWindow.on('resized', () => {
     const bounds = mainWindow.getBounds();
-    settings.windowBounds.width = bounds.width;
-    settings.windowBounds.height = bounds.height;
-    saveSettings();
+    if (bounds.width > 400 && bounds.height > 300) { // Minimum reasonable size
+      settings.windowBounds.width = bounds.width;
+      settings.windowBounds.height = bounds.height;
+      console.log('📍 Window resized, saving size:', bounds.width, bounds.height);
+      saveSettings();
+    }
   });
 }
 
@@ -242,11 +268,12 @@ async function initializeWebScraper() {
     stockData = await scraper.fetchStockData();
     console.log(`📊 Initial stock data loaded: ${stockData.length} stocks`);
     
-    // Send initial data to renderer
+    // Send initial data to renderer immediately
     if (mainWindow) {
+      console.log('📡 Sending initial stock data to UI...');
       mainWindow.webContents.send('stock-data-updated', stockData);
     }
-  } catch (error) {
+    } catch (error) {
     console.error('❌ Failed to load initial stock data:', error);
     stockData = [];
   }
@@ -296,6 +323,11 @@ async function loadStockData() {
 // IPC handlers
 ipcMain.handle('get-stock-data', () => {
   console.log('📤 Sending stock data to UI:', stockData ? stockData.length : 0, 'stocks');
+  console.log('📤 Stock data type:', typeof stockData);
+  console.log('📤 Is array:', Array.isArray(stockData));
+  if (stockData && stockData.length > 0) {
+    console.log('📤 Sample stock:', stockData[0]);
+  }
   return stockData;
 });
 
@@ -317,6 +349,7 @@ ipcMain.handle('refresh-queries-only', async () => {
 // Auto-updater event handlers
 autoUpdater.on('checking-for-update', () => {
   console.log('🔍 Checking for updates...');
+  console.log('🔗 GitHub repo: AMoussa77/The-Egyptian-Exchange');
   if (mainWindow) {
     mainWindow.webContents.send('update-checking');
   }
@@ -324,9 +357,11 @@ autoUpdater.on('checking-for-update', () => {
 
 autoUpdater.on('update-available', (info) => {
   console.log('✅ Update available!');
-  console.log('📋 Version:', info.version);
+  console.log('📋 New version:', info.version);
+  console.log('📋 Current version:', app.getVersion());
   console.log('📝 Release notes:', info.releaseNotes);
   console.log('📦 Release date:', info.releaseDate);
+  console.log('🔗 GitHub release URL:', `https://github.com/AMoussa77/The-Egyptian-Exchange/releases/tag/${info.version}`);
   if (mainWindow) {
     mainWindow.webContents.send('update-available', info);
   }
@@ -334,14 +369,26 @@ autoUpdater.on('update-available', (info) => {
 
 autoUpdater.on('update-not-available', (info) => {
   console.log('ℹ️ No updates available');
-  console.log('📋 Info:', info);
+  console.log('📋 Current version:', app.getVersion());
+  console.log('📋 Latest version:', info?.version || 'Unknown');
+  console.log('🔗 GitHub repo: https://github.com/AMoussa77/The-Egyptian-Exchange');
   if (mainWindow) {
-    mainWindow.webContents.send('update-not-available', info);
+    mainWindow.webContents.send('update-not-available', {
+      ...info,
+      currentVersion: app.getVersion(),
+      message: 'You are using the latest version!'
+    });
   }
 });
 
 autoUpdater.on('error', (err) => {
-  console.error('Error in auto-updater:', err);
+  console.error('❌ Error in auto-updater:', err);
+  console.error('🔗 GitHub repo: AMoussa77/The-Egyptian-Exchange');
+  console.error('💡 Make sure GitHub releases are properly configured');
+  console.error('📦 App is packaged:', app.isPackaged);
+  console.error('🔗 Feed URL configured for: AMoussa77/The-Egyptian-Exchange');
+  console.error('📋 Current version:', app.getVersion());
+  
   if (mainWindow) {
     mainWindow.webContents.send('update-error', err.message);
   }
@@ -374,20 +421,146 @@ function checkForUpdatesIfEnabled() {
   }
 }
 
+// Function to check GitHub releases directly via API
+async function checkGitHubReleasesDirectly() {
+  console.log('🔗 Checking GitHub releases directly via API...');
+  
+  try {
+    const https = require('https');
+    const { URL } = require('url');
+    
+    return new Promise((resolve, reject) => {
+      const options = {
+        hostname: 'api.github.com',
+        port: 443,
+        path: '/repos/AMoussa77/The-Egyptian-Exchange/releases/latest',
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Egyptian-Exchange-Stocks-App',
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      };
+      
+      const req = https.request(options, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          try {
+            const release = JSON.parse(data);
+            console.log('📦 Latest GitHub release:', release.tag_name);
+            
+            const currentVersion = app.getVersion();
+            const latestVersion = release.tag_name.replace('v', '');
+            
+            console.log('📋 Current version:', currentVersion);
+            console.log('📋 Latest version:', latestVersion);
+            
+            if (latestVersion !== currentVersion) {
+              console.log('✅ New version available via GitHub API');
+              const updateInfo = {
+                version: latestVersion,
+                releaseNotes: release.body || 'New version available',
+                releaseDate: release.published_at
+              };
+              
+              if (mainWindow) {
+                mainWindow.webContents.send('update-available', updateInfo);
+              }
+              
+              resolve({ updateInfo });
+            } else {
+              console.log('ℹ️ No new version available via GitHub API');
+              if (mainWindow) {
+                mainWindow.webContents.send('update-not-available', {
+                  currentVersion: currentVersion,
+                  message: 'You are using the latest version!'
+                });
+              }
+              resolve({ updateInfo: null });
+            }
+          } catch (parseError) {
+            console.error('❌ Error parsing GitHub API response:', parseError);
+            reject(parseError);
+          }
+        });
+      });
+      
+      req.on('error', (err) => {
+        console.error('❌ GitHub API request failed:', err);
+        reject(err);
+      });
+      
+      req.setTimeout(10000, () => {
+        req.destroy();
+        reject(new Error('GitHub API request timeout'));
+      });
+      
+      req.end();
+    });
+  } catch (error) {
+    console.error('❌ GitHub API fallback failed:', error);
+    throw error;
+  }
+}
+
+// Function to check for updates on startup (production mode only)
+async function checkForUpdatesOnStartup() {
+  console.log('🔍 Checking for updates on startup...');
+  console.log('📋 Current version:', app.getVersion());
+  console.log('🔗 Checking GitHub releases...');
+  
+  try {
+    // Check if auto-updater is properly initialized
+    if (!autoUpdater || typeof autoUpdater.checkForUpdates !== 'function') {
+      console.error('❌ Auto-updater not properly initialized, using GitHub API fallback');
+      const result = await checkGitHubReleasesDirectly();
+      console.log('✅ Startup update check completed via GitHub API:', result);
+      return;
+    }
+    
+    // Use auto-updater for startup check
+    console.log('🏭 Using auto-updater for startup check');
+    const result = await autoUpdater.checkForUpdates();
+    console.log('✅ Startup update check completed via auto-updater:', result);
+    
+  } catch (error) {
+    console.error('❌ Startup update check failed:', error);
+    console.error('❌ Error details:', error.message);
+    
+    // Try GitHub API fallback for startup check
+    console.log('🔄 Trying GitHub API fallback for startup check');
+    try {
+      const githubResult = await checkGitHubReleasesDirectly();
+      console.log('✅ Startup update check completed via GitHub API fallback:', githubResult);
+    } catch (githubError) {
+      console.error('❌ GitHub API fallback also failed for startup check:', githubError);
+    }
+  }
+}
+
 // Function to check for updates (always works for manual checks)
 function checkForUpdatesManual() {
-  if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
-    console.log('🔍 Manual update check triggered');
-    return autoUpdater.checkForUpdates();
-  } else {
-    console.log('🧪 Development mode: Simulating update check');
+  console.log('🔍 Manual update check triggered');
+  console.log('📋 Current version:', app.getVersion());
+  console.log('🔗 Checking GitHub releases...');
+  
+  // Force update check to work in development mode
+  if (!app.isPackaged) {
+    console.log('🧪 Development mode: Forcing update check');
+    
+    // Create a mock update check that simulates checking GitHub
     return new Promise((resolve) => {
       setTimeout(() => {
-        console.log('🔍 Simulated update check completed');
-        // Simulate finding an update
+        console.log('✅ Simulated update check completed');
+        
+        // Simulate finding a newer version (since there's v0.6.1 on GitHub)
         const mockUpdateInfo = {
           version: '0.6.1',
-          releaseNotes: 'Test update for development - Egyptian Exchange Stocks',
+          releaseNotes: 'Development mode simulation - Egyptian Exchange Stocks',
           releaseDate: new Date().toISOString()
         };
         
@@ -397,32 +570,116 @@ function checkForUpdatesManual() {
         }
         
         resolve({ updateInfo: mockUpdateInfo });
-      }, 2000);
+      }, 2000); // 2 second delay to simulate network request
     });
   }
+  
+  // Production mode - use real auto-updater
+  console.log('🏭 Production mode: Using real auto-updater');
+  console.log('🔗 Feed URL configured for: AMoussa77/The-Egyptian-Exchange');
+  
+  // In production mode, always try GitHub API first for reliability
+  console.log('🏭 Production mode: Using GitHub API for reliable update checking');
+  return checkGitHubReleasesDirectly().then((result) => {
+    console.log('✅ Production update check completed via GitHub API:', result);
+    return result;
+  }).catch((error) => {
+    console.error('❌ Production GitHub API check failed:', error);
+    console.error('❌ Error details:', error.message);
+    
+    // Send error to UI
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', error.message);
+    }
+    
+    // Fallback to auto-updater if GitHub API fails
+    console.log('🔄 Trying auto-updater as fallback for production mode');
+    if (!autoUpdater || typeof autoUpdater.checkForUpdates !== 'function') {
+      console.error('❌ Auto-updater not available, providing error response');
+      return Promise.resolve({
+        updateInfo: null,
+        message: 'Update check failed: ' + error.message
+      });
+    }
+    
+    return autoUpdater.checkForUpdates().then((result) => {
+      console.log('✅ Auto-updater fallback successful:', result);
+      return result;
+    }).catch((autoUpdaterError) => {
+      console.error('❌ Auto-updater fallback also failed:', autoUpdaterError);
+      return Promise.resolve({
+        updateInfo: null,
+        message: 'Update check failed: ' + error.message
+      });
+    });
+  });
 }
 
 // Auto-updater IPC handlers
-ipcMain.handle('check-for-updates', () => {
+ipcMain.handle('check-for-updates', async () => {
   console.log('Manual check for updates triggered');
   return checkForUpdatesManual();
 });
 
-ipcMain.handle('download-update', () => {
+ipcMain.handle('download-update', async () => {
   console.log('Download update triggered');
+  
   if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
-    return autoUpdater.downloadUpdate();
+    // Production mode - try auto-updater with timeout
+    console.log('🏭 Production mode: Starting download via auto-updater');
+    
+    try {
+      // Check if auto-updater is available
+      if (!autoUpdater || typeof autoUpdater.downloadUpdate !== 'function') {
+        throw new Error('Auto-updater not available');
+      }
+      
+      // Add timeout to prevent hanging
+      const downloadPromise = autoUpdater.downloadUpdate();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Download timeout after 60 seconds')), 60000)
+      );
+      
+      await Promise.race([downloadPromise, timeoutPromise]);
+      console.log('✅ Download completed via auto-updater');
+      
+    } catch (error) {
+      console.error('❌ Auto-updater download failed:', error);
+      
+      // Send error to UI
+      if (mainWindow) {
+        mainWindow.webContents.send('update-error', 'Download failed: ' + error.message);
+      }
+      
+      throw error;
+    }
   } else {
+    // Development mode - simulate download
     console.log('🧪 Development mode: Simulating download');
     return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('✅ Simulated download completed');
-        const mockInfo = { version: '0.6.1' };
+      // Simulate download progress
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
         if (mainWindow) {
-          mainWindow.webContents.send('update-downloaded', mockInfo);
+          mainWindow.webContents.send('update-download-progress', {
+            percent: progress,
+            bytesPerSecond: 1000000,
+            transferred: progress * 1000000,
+            total: 10000000
+          });
         }
-        resolve();
-      }, 3000);
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          console.log('✅ Simulated download completed');
+          const mockInfo = { version: '0.6.1' }; // Updated to 0.6.1
+          if (mainWindow) {
+            mainWindow.webContents.send('update-downloaded', mockInfo);
+          }
+          resolve();
+        }
+      }, 200); // Update every 200ms for smooth progress
     });
   }
 });

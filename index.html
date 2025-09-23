@@ -43,6 +43,20 @@
             align-items: flex-end;
         }
 
+        .record-counter {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .record-counter span {
+            background: rgba(0, 150, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            color: #00bfff;
+            font-weight: 500;
+        }
+
         .header h1 {
             color: #ffffff;
             font-size: 1.2em;
@@ -604,6 +618,7 @@
             cursor: pointer;
         }
 
+
         .release-notes {
             background: rgba(40, 40, 60, 0.5);
             padding: 10px;
@@ -643,7 +658,10 @@
     <div class="header">
         <div class="header-left">
             <h1>🏛️ Egyptian Exchange Stocks</h1>
-            <p>Real-time stock data from Excel database</p>
+            <p>Real-time stock data from web scraping</p>
+            <div class="record-counter">
+                <span id="recordCount">📊 Loading...</span>
+            </div>
             <div class="controls">
                 <button class="btn" onclick="refreshQueriesAndData()">🔄 Refresh</button>
                 <button class="btn" onclick="exportData()">📊 Export</button>
@@ -770,7 +788,7 @@
                     </label>
                 </div>
                 <div class="setting-item">
-                    <button class="btn" onclick="checkForUpdates()">🔍 Check for Updates</button>
+                    <button class="btn" onclick="checkForUpdates()" id="checkUpdateBtn">🔍 Check for Updates</button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -804,8 +822,8 @@
 
         // Listen for data-ready signal from main process
         ipcRenderer.on('data-ready', async () => {
-            console.log('📊 Data ready signal received, loading stock data...');
-            await loadStockData();
+            console.log('📊 Data ready signal received, waiting for stock data...');
+            // Don't call loadStockData here - wait for stock-data-updated event
         });
 
         async function loadStockData() {
@@ -813,6 +831,11 @@
                 console.log('🔄 Requesting stock data from main process...');
                 const data = await ipcRenderer.invoke('get-stock-data');
                 console.log('📊 Received data:', data ? data.length : 0, 'stocks');
+                console.log('📊 Data type:', typeof data);
+                console.log('📊 Is array:', Array.isArray(data));
+                if (data && data.length > 0) {
+                    console.log('📊 Sample data:', data[0]);
+                }
                 
                 if (data && data.length > 0) {
                     allStocks = data;
@@ -835,6 +858,7 @@
                     initializeColumnVisibility();
                     displayStocks();
                     updateLastUpdated();
+                    updateRecordCounter();
                 } else {
                     showStatus('No stock data available. Please check your internet connection.', 'error');
                 }
@@ -1277,6 +1301,7 @@
                 
                 displayStocks();
                 updateLastUpdated();
+                updateRecordCounter();
             } catch (error) {
                 showStatus('Error refreshing data: ' + error.message, 'error');
             }
@@ -1334,6 +1359,26 @@
             lastUpdatedElement.classList.remove('updating');
         }
 
+        function updateRecordCounter() {
+            const recordCountElement = document.getElementById('recordCount');
+            const totalStocks = allStocks ? allStocks.length : 0;
+            const filteredStocksCount = filteredStocks ? filteredStocks.length : 0;
+            
+            if (totalStocks === 0) {
+                recordCountElement.textContent = '📊 Loading...';
+                recordCountElement.style.color = '#ffa500';
+            } else if (totalStocks === 2) {
+                recordCountElement.textContent = `⚠️ Mock Data: ${totalStocks} records`;
+                recordCountElement.style.color = '#ff6b6b';
+            } else {
+                recordCountElement.textContent = `📊 ${totalStocks} stocks loaded`;
+                if (filteredStocksCount !== totalStocks) {
+                    recordCountElement.textContent += ` (${filteredStocksCount} filtered)`;
+                }
+                recordCountElement.style.color = '#00bfff';
+            }
+        }
+
         function showUpdating() {
             const lastUpdatedElement = document.getElementById('lastUpdated');
             lastUpdatedElement.textContent = 'Updating data...';
@@ -1369,6 +1414,7 @@
             
             displayStocks();
             updateLastUpdated();
+            updateRecordCounter();
         });
 
         ipcRenderer.on('stock-data-error', (event, error) => {
@@ -1492,12 +1538,28 @@
         }
 
         async function checkForUpdates() {
+            const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+            
+            // Disable button and show checking status
+            checkUpdateBtn.disabled = true;
+            checkUpdateBtn.textContent = '⏳ Checking...';
+            
             try {
                 showStatus('Checking for updates...', 'info');
-                await ipcRenderer.invoke('check-for-updates');
+                
+                // Add timeout to prevent getting stuck
+                const updatePromise = ipcRenderer.invoke('check-for-updates');
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Update check timeout')), 10000)
+                );
+                
+                await Promise.race([updatePromise, timeoutPromise]);
             } catch (error) {
                 console.error('Error checking for updates:', error);
                 showStatus('Error checking for updates: ' + error.message, 'error');
+            } finally {
+                checkUpdateBtn.disabled = false;
+                checkUpdateBtn.textContent = '🔍 Check for Updates';
             }
         }
     </script>
