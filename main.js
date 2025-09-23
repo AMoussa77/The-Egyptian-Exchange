@@ -27,55 +27,88 @@ const path = require('path');
 const fs = require('fs');
 
 // Load modules with fallback support
-let XLSX;
-let chokidar;
+let axios;
+let cheerio;
+
 try {
-  XLSX = require('xlsx');
+  axios = require('axios');
+  console.log('✅ Axios loaded successfully in main.js');
 } catch (error) {
-  try {
-    const xlsxPath = path.join(process.resourcesPath, 'xlsx');
-    XLSX = require(xlsxPath);
-  } catch (fallbackError) {
-    console.error('Failed to load xlsx:', fallbackError);
-    // Mock XLSX for graceful degradation
-    XLSX = {
-      readFile: () => ({ SheetNames: [], Sheets: {} }),
-      utils: { sheet_to_json: () => [] }
-    };
-  }
+  console.error('Failed to load axios in main.js:', error.message);
+  // Mock axios for graceful degradation
+  axios = {
+    get: () => Promise.reject(new Error('Axios not available'))
+  };
+  console.log('⚠️ Using mock axios in main.js');
 }
 
 try {
-  chokidar = require('chokidar');
+  cheerio = require('cheerio');
+  console.log('✅ Cheerio loaded successfully in main.js');
 } catch (error) {
-  try {
-    const chokidarPath = path.join(process.resourcesPath, 'chokidar');
-    chokidar = require(chokidarPath);
-  } catch (fallbackError) {
-    console.error('Failed to load chokidar:', fallbackError);
-    // Mock chokidar for graceful degradation
-    chokidar = {
-      watch: () => ({
-        on: () => {},
-        close: () => {}
-      })
-    };
-  }
+  console.error('Failed to load cheerio in main.js:', error.message);
+  // Mock cheerio for graceful degradation
+  cheerio = {
+    load: () => ({
+      find: () => ({ each: () => {} }),
+      text: () => ''
+    })
+  };
+  console.log('⚠️ Using mock cheerio in main.js');
 }
 
 const { exec } = require('child_process');
 
-// Windows COM automation for Excel
-let Excel;
+// Load web scraper with fallback support
+let EgyptianExchangeScraper;
 try {
-    Excel = require('node-ole');
+  EgyptianExchangeScraper = require('./webScraper');
 } catch (error) {
-    console.log('node-ole not available, COM automation disabled');
+  console.error('Failed to load webScraper:', error);
+  // Create a mock scraper for graceful degradation
+  EgyptianExchangeScraper = class MockScraper {
+    constructor() {
+      this.isRunning = false;
+    }
+    
+    async fetchStockData() {
+      console.log('⚠️ Web scraper not available, returning mock data');
+      return [
+        {
+          'أقصى_سعر': '1251',
+          'أدنى_سعر': '1187.5',
+          'إغلاق': '1250',
+          'إقفال_سابق': '1250',
+          'التغير': '0',
+          '%التغيير': '0',
+          'أعلى': '1251',
+          'الأدنى': '1250',
+          'الطلب': '1250',
+          'العرض': '1460',
+          'أخر_سعر': '1250',
+          'الإسم_المختصر': 'العز الدخيلة للصلب',
+          'حجم_التداول': '76'
+        }
+      ];
+    }
+    
+    startAutoUpdate(callback) {
+      console.log('⚠️ Mock scraper: Auto-update disabled');
+      this.isRunning = true;
+      // Load initial mock data
+      this.fetchStockData().then(callback);
+    }
+    
+    stopAutoUpdate() {
+      this.isRunning = false;
+      console.log('⏹️ Mock scraper stopped');
+    }
+  };
 }
 
 let mainWindow;
 let stockData = [];
-let watcher;
+let scraper;
 let settings = {
     autoUpdate: true,
     windowBounds: {
@@ -174,8 +207,13 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   }
 
-  // Watch for Excel file changes
-  watchExcelFile();
+  // Initialize web scraper after window is ready
+  mainWindow.webContents.once('dom-ready', async () => {
+    await initializeWebScraper();
+    
+    // Send a signal to the UI that data is ready
+    mainWindow.webContents.send('data-ready');
+  });
   
   // Save window bounds when window is moved or resized
   mainWindow.on('moved', () => {
@@ -193,158 +231,71 @@ function createWindow() {
   });
 }
 
-function watchExcelFile() {
-  const excelPath = path.join(__dirname, 'Stocks.xlsx');
+async function initializeWebScraper() {
+  console.log('🚀 Initializing Egyptian Exchange web scraper...');
   
-  watcher = chokidar.watch(excelPath, {
-    persistent: true,
-    ignoreInitial: false
-  });
-
-  watcher.on('change', () => {
-    console.log('Excel file changed, reloading data...');
-    loadStockData();
-  });
-
-  watcher.on('add', () => {
-    console.log('Excel file added, loading data...');
-    loadStockData();
-  });
-
-  // Load initial data with query refresh
-  loadStockDataWithRefresh();
-}
-
-async function refreshExcelQueries() {
-  const excelPath = path.join(__dirname, 'Stocks.xlsx');
+  scraper = new EgyptianExchangeScraper();
   
-  // Try node-ole first
-  if (Excel) {
-    try {
-      console.log('Refreshing Excel queries using node-ole...');
-      
-      // Create Excel application object using node-ole
-      const excelApp = Excel.CreateObject('Excel.Application');
-      excelApp.Visible = false; // Run in background
-      excelApp.DisplayAlerts = false; // Suppress alerts
-      
-      // Open the workbook
-      const workbook = excelApp.Workbooks.Open(excelPath);
-      
-      // Refresh all data connections
-      workbook.RefreshAll();
-      
-      // Wait a moment for refresh to complete
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Save the workbook
-      workbook.Save();
-      
-      // Close workbook and Excel
-      workbook.Close();
-      excelApp.Quit();
-      
-      console.log('Excel queries refreshed successfully using node-ole');
-      return true;
-    } catch (error) {
-      console.error('Error with node-ole:', error);
+  // Load initial data first, then start auto-updating
+  try {
+    console.log('📊 Loading initial stock data...');
+    stockData = await scraper.fetchStockData();
+    console.log(`📊 Initial stock data loaded: ${stockData.length} stocks`);
+    
+    // Send initial data to renderer
+    if (mainWindow) {
+      mainWindow.webContents.send('stock-data-updated', stockData);
     }
+  } catch (error) {
+    console.error('❌ Failed to load initial stock data:', error);
+    stockData = [];
   }
   
-  // Fallback to PowerShell COM automation
-  try {
-    console.log('Refreshing Excel queries using PowerShell...');
+  // Start auto-updating stock data from web
+  scraper.startAutoUpdate((data) => {
+    stockData = data;
+    console.log(`📊 Updated stock data: ${data.length} stocks`);
     
-    const psScript = `
-      $excel = New-Object -ComObject Excel.Application
-      $excel.Visible = $false
-      $excel.DisplayAlerts = $false
-      $workbook = $excel.Workbooks.Open("${excelPath.replace(/\\/g, '\\\\')}")
-      $workbook.RefreshAll()
-      Start-Sleep -Seconds 2
-      $workbook.Save()
-      $workbook.Close()
-      $excel.Quit()
-      [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null
-    `;
-    
-    await new Promise((resolve, reject) => {
-      exec(`powershell -Command "${psScript}"`, (error, stdout, stderr) => {
-        if (error) {
-          console.error('PowerShell error:', error);
-          reject(error);
-        } else {
-          console.log('Excel queries refreshed successfully using PowerShell');
-          resolve();
-        }
-      });
-    });
-    
-    return true;
-  } catch (error) {
-    console.error('Error refreshing Excel queries:', error);
-    return false;
-  }
+    // Send updated data to renderer
+    if (mainWindow) {
+      mainWindow.webContents.send('stock-data-updated', stockData);
+    }
+  });
 }
 
-function loadStockData() {
+async function refreshStockData() {
+  console.log('🔄 Refreshing stock data from Egyptian Exchange website...');
+  
   try {
-    const excelPath = path.join(__dirname, 'Stocks.xlsx');
-    const workbook = XLSX.readFile(excelPath);
-    const sheetName = workbook.SheetNames[0]; // Use first sheet
-    const worksheet = workbook.Sheets[sheetName];
-    
-    // Convert to JSON
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-    
-    if (jsonData.length > 1) {
-      const headers = jsonData[0];
-      const dataRows = jsonData.slice(1);
-      
-      stockData = dataRows.map(row => {
-        const stock = {};
-        headers.forEach((header, index) => {
-          stock[header] = row[index] || '';
-        });
-        return stock;
-      }).filter(stock => stock[headers[0]]); // Filter out empty rows
-      
-      console.log(`Loaded ${stockData.length} stocks`);
+    if (scraper) {
+      const data = await scraper.fetchStockData();
+      stockData = data;
       
       // Send updated data to renderer
       if (mainWindow) {
         mainWindow.webContents.send('stock-data-updated', stockData);
       }
+      
+      console.log(`✅ Stock data refreshed: ${data.length} stocks`);
+      return true;
+    } else {
+      console.error('❌ Web scraper not initialized');
+      return false;
     }
   } catch (error) {
-    console.error('Error loading Excel file:', error);
-    if (mainWindow) {
-      mainWindow.webContents.send('stock-data-error', error.message);
-    }
+    console.error('❌ Error refreshing stock data:', error);
+    return false;
   }
 }
 
-async function loadStockDataWithRefresh() {
-  try {
-    // First refresh Excel queries
-    const refreshSuccess = await refreshExcelQueries();
-    if (refreshSuccess) {
-      console.log('Excel queries refreshed, loading updated data...');
-    } else {
-      console.log('Skipping query refresh, loading current data...');
-    }
-    
-    // Then load the data
-    loadStockData();
-  } catch (error) {
-    console.error('Error in loadStockDataWithRefresh:', error);
-    // Fallback to regular load
-    loadStockData();
-  }
+async function loadStockData() {
+  console.log('📊 Loading stock data from web source...');
+  return await refreshStockData();
 }
 
 // IPC handlers
 ipcMain.handle('get-stock-data', () => {
+  console.log('📤 Sending stock data to UI:', stockData ? stockData.length : 0, 'stocks');
   return stockData;
 });
 
@@ -354,13 +305,13 @@ ipcMain.handle('refresh-data', () => {
 });
 
 ipcMain.handle('refresh-queries-and-data', async () => {
-  await loadStockDataWithRefresh();
+  await refreshStockData();
   return stockData;
 });
 
 ipcMain.handle('refresh-queries-only', async () => {
-  const success = await refreshExcelQueries();
-  return { success, message: success ? 'Queries refreshed successfully' : 'Failed to refresh queries' };
+  const success = await refreshStockData();
+  return { success, message: success ? 'Stock data refreshed successfully' : 'Failed to refresh stock data' };
 });
 
 // Auto-updater event handlers
@@ -521,8 +472,8 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  if (watcher) {
-    watcher.close();
+  if (scraper) {
+    scraper.stopAutoUpdate();
   }
   if (process.platform !== 'darwin') {
     app.quit();
@@ -536,7 +487,7 @@ app.on('activate', () => {
 });
 
 app.on('before-quit', () => {
-  if (watcher) {
-    watcher.close();
+  if (scraper) {
+    scraper.stopAutoUpdate();
   }
 });

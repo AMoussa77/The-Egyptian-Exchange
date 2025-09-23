@@ -798,14 +798,21 @@
         // Load initial data
         window.addEventListener('DOMContentLoaded', async () => {
             loadColumnVisibility();
-            await loadStockData();
             loadWatchlist();
             startAutoRefresh();
         });
 
+        // Listen for data-ready signal from main process
+        ipcRenderer.on('data-ready', async () => {
+            console.log('📊 Data ready signal received, loading stock data...');
+            await loadStockData();
+        });
+
         async function loadStockData() {
             try {
+                console.log('🔄 Requesting stock data from main process...');
                 const data = await ipcRenderer.invoke('get-stock-data');
+                console.log('📊 Received data:', data ? data.length : 0, 'stocks');
                 
                 if (data && data.length > 0) {
                     allStocks = data;
@@ -829,7 +836,7 @@
                     displayStocks();
                     updateLastUpdated();
                 } else {
-                    showStatus('No stock data found. Please check the Excel file.', 'error');
+                    showStatus('No stock data available. Please check your internet connection.', 'error');
                 }
             } catch (error) {
                 console.error('Error loading stock data:', error);

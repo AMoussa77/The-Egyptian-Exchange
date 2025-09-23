@@ -1,7 +1,7 @@
 {
   "name": "egyptian-exchange-stocks",
-  "version": "0.6.0",
-  "description": "Desktop application for Egyptian Exchange stocks with real-time data from Excel",
+  "version": "0.6.1",
+  "description": "Desktop application for Egyptian Exchange stocks with real-time data from web scraping",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -11,7 +11,12 @@
     "publish": "electron-builder --publish=always",
     "release": "node build-release.js"
   },
-  "keywords": ["stocks", "egyptian-exchange", "desktop", "electron"],
+  "keywords": [
+    "stocks",
+    "egyptian-exchange",
+    "desktop",
+    "electron"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
@@ -19,8 +24,8 @@
     "electron-builder": "^24.6.4"
   },
   "dependencies": {
-    "xlsx": "^0.18.5",
-    "chokidar": "^3.5.3",
+    "axios": "^1.12.2",
+    "cheerio": "^1.1.2",
     "electron-updater": "^6.1.7"
   },
   "build": {
@@ -39,12 +44,13 @@
       "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
       "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
       "!**/{appveyor.yml,.travis.yml,circle.yml}",
-      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+      "!Stocks.xlsx"
     ],
     "asarUnpack": [
       "node_modules/electron-updater/**/*",
-      "node_modules/xlsx/**/*",
-      "node_modules/chokidar/**/*"
+      "node_modules/axios/**/*",
+      "node_modules/cheerio/**/*"
     ],
     "asar": true,
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
@@ -57,7 +63,10 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         }
       ],
       "publisherName": "Egyptian Exchange Stocks",
@@ -71,12 +80,16 @@
       "deleteAppDataOnUninstall": false
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "category": "public.app-category.finance",
       "icon": "assets/icon.icns"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "category": "Finance",
       "icon": "assets/icon.png"
     },
@@ -86,12 +99,12 @@
         "to": "electron-updater"
       },
       {
-        "from": "node_modules/xlsx",
-        "to": "xlsx"
+        "from": "node_modules/axios",
+        "to": "axios"
       },
       {
-        "from": "node_modules/chokidar",
-        "to": "chokidar"
+        "from": "node_modules/cheerio",
+        "to": "cheerio"
       }
     ]
   }

@@ -1,15 +1,15 @@
 # Egyptian Exchange Stocks Desktop Application
 
-A real-time desktop application for monitoring Egyptian Exchange stocks using Excel as a database.
+A real-time desktop application for monitoring Egyptian Exchange stocks with live web data.
 
 ## Features
 
-- 📊 **Real-time Data**: Automatically monitors Excel file changes and updates the interface
-- 🔄 **Excel Query Refresh**: Automatically refreshes Excel queries and data connections using COM automation
+- 📊 **Real-time Data**: Automatically fetches live data from Egyptian Exchange website
+- 🌐 **Web Scraping**: Directly fetches data from Egyptian Exchange website
 - 🔍 **Search & Filter**: Search through stocks by any field
 - 📈 **Visual Indicators**: Color-coded price changes (green for positive, red for negative)
 - 📱 **Responsive Design**: Works on different screen sizes
-- 🔄 **Auto-refresh**: Updates every 30 seconds automatically with query refresh
+- 🔄 **Auto-refresh**: Updates every 30 seconds automatically
 - ⭐ **Watchlist**: Personal watchlist with persistent storage
 - 📤 **Export**: Export filtered data to CSV
 - 🎨 **Modern UI**: Beautiful, modern interface with smooth animations
@@ -44,14 +44,14 @@ The application includes automatic Excel query refresh using Windows COM automat
 - **Requirements**: 
   - Windows operating system
   - Microsoft Excel installed
-  - Excel file must have data connections/queries configured
+  - Internet connection required for live data
 
 ### How It Works
 
-1. **COM Automation**: Uses `winax` library to control Excel via COM
-2. **Query Execution**: Calls `workbook.RefreshAll()` to refresh all data connections
-3. **Data Update**: Saves the updated Excel file and reads the new data
-4. **Fallback**: If COM automation fails, falls back to reading current Excel data
+1. **Web Scraping**: Uses `axios` to fetch HTML from Egyptian Exchange website
+2. **HTML Parsing**: Uses `cheerio` to parse HTML and extract stock data
+3. **Data Processing**: Converts scraped data to JSON format for the application
+4. **Fallback**: If web scraping fails, shows mock data to keep app functional
 
 ## Development Mode
 
@@ -79,17 +79,17 @@ npm run build
 
 ## How It Works
 
-1. **Excel Monitoring**: The application watches the `Stocks.xlsx` file for changes using `chokidar`
-2. **Data Reading**: Uses `xlsx` library to read Excel data
-3. **Real-time Updates**: Automatically refreshes when the Excel file is modified
+1. **Web Scraping**: The application fetches data from Egyptian Exchange website
+2. **HTML Parsing**: Uses `cheerio` library to parse HTML and extract stock data
+3. **Real-time Updates**: Automatically refreshes data every 30 seconds
 4. **IPC Communication**: Main process communicates with renderer process for data updates
 
-## Excel File Format
+## Data Source
 
-The application expects an Excel file (`Stocks.xlsx`) in the same directory with:
-- First row as headers
-- Data starting from the second row
-- Arabic column names supported
+The application fetches data directly from the Egyptian Exchange website:
+- **URL**: http://41.33.162.236/egs4
+- **Format**: HTML table with stock data
+- **Columns**: Arabic column names supported (أقصى_سعر, أدنى_سعر, إغلاق, etc.)
 
 ## Customization
 
@@ -100,8 +100,8 @@ You can customize the application by modifying:
 
 ## Troubleshooting
 
-- **Excel file not found**: Ensure `Stocks.xlsx` is in the same directory as the application
-- **Data not updating**: Check if the Excel file is not open in another application
+- **No data available**: Check your internet connection
+- **Data not updating**: The website might be temporarily unavailable
 - **Performance issues**: For large datasets, consider implementing pagination
 
 ## License
