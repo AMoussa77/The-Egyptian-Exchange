@@ -1,9 +1,68 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
-const { autoUpdater } = require('electron-updater');
+let autoUpdater;
+try {
+  // Try to load from normal node_modules first
+  autoUpdater = require('electron-updater').autoUpdater;
+} catch (error) {
+  try {
+    // If that fails, try to load from extraResources
+    const updaterPath = path.join(process.resourcesPath, 'electron-updater');
+    autoUpdater = require(updaterPath).autoUpdater;
+  } catch (fallbackError) {
+    console.error('Failed to load electron-updater:', fallbackError);
+    // Create a mock autoUpdater for graceful degradation
+    autoUpdater = {
+      checkForUpdates: () => Promise.resolve(),
+      checkForUpdatesAndNotify: () => Promise.resolve(),
+      downloadUpdate: () => Promise.resolve(),
+      quitAndInstall: () => {},
+      setFeedURL: () => {},
+      on: () => {},
+      autoDownload: false,
+      autoInstallOnAppQuit: false
+    };
+  }
+}
 const path = require('path');
 const fs = require('fs');
-const XLSX = require('xlsx');
-const chokidar = require('chokidar');
+
+// Load modules with fallback support
+let XLSX;
+let chokidar;
+try {
+  XLSX = require('xlsx');
+} catch (error) {
+  try {
+    const xlsxPath = path.join(process.resourcesPath, 'xlsx');
+    XLSX = require(xlsxPath);
+  } catch (fallbackError) {
+    console.error('Failed to load xlsx:', fallbackError);
+    // Mock XLSX for graceful degradation
+    XLSX = {
+      readFile: () => ({ SheetNames: [], Sheets: {} }),
+      utils: { sheet_to_json: () => [] }
+    };
+  }
+}
+
+try {
+  chokidar = require('chokidar');
+} catch (error) {
+  try {
+    const chokidarPath = path.join(process.resourcesPath, 'chokidar');
+    chokidar = require(chokidarPath);
+  } catch (fallbackError) {
+    console.error('Failed to load chokidar:', fallbackError);
+    // Mock chokidar for graceful degradation
+    chokidar = {
+      watch: () => ({
+        on: () => {},
+        close: () => {}
+      })
+    };
+  }
+}
+
 const { exec } = require('child_process');
 
 // Windows COM automation for Excel
@@ -376,7 +435,7 @@ function checkForUpdatesManual() {
         console.log('🔍 Simulated update check completed');
         // Simulate finding an update
         const mockUpdateInfo = {
-          version: '0.5.1',
+          version: '0.6.1',
           releaseNotes: 'Test update for development - Egyptian Exchange Stocks',
           releaseDate: new Date().toISOString()
         };
@@ -407,7 +466,7 @@ ipcMain.handle('download-update', () => {
     return new Promise((resolve) => {
       setTimeout(() => {
         console.log('✅ Simulated download completed');
-        const mockInfo = { version: '0.5.1' };
+        const mockInfo = { version: '0.6.1' };
         if (mainWindow) {
           mainWindow.webContents.send('update-downloaded', mockInfo);
         }

@@ -1,6 +1,6 @@
 {
   "name": "egyptian-exchange-stocks",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Desktop application for Egyptian Exchange stocks with real-time data from Excel",
   "main": "main.js",
   "scripts": {
@@ -32,7 +32,19 @@
     "files": [
       "**/*",
       "!node_modules/**/*",
-      "!dist/**"
+      "!dist/**",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ],
+    "asarUnpack": [
+      "node_modules/electron-updater/**/*",
+      "node_modules/xlsx/**/*",
+      "node_modules/chokidar/**/*"
     ],
     "asar": true,
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
@@ -67,6 +79,20 @@
       "target": ["AppImage"],
       "category": "Finance",
       "icon": "assets/icon.png"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "node_modules/electron-updater",
+        "to": "electron-updater"
+      },
+      {
+        "from": "node_modules/xlsx",
+        "to": "xlsx"
+      },
+      {
+        "from": "node_modules/chokidar",
+        "to": "chokidar"
+      }
+    ]
   }
 }
