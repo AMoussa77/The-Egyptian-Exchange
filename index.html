@@ -781,6 +781,18 @@
                     </label>
                 </div>
                 <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="minimizeToTray" checked>
+                        Minimize to system tray
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="closeToTray" checked>
+                        Close to system tray
+                    </label>
+                </div>
+                <div class="setting-item">
                     <button class="btn" onclick="checkForUpdates()" id="checkUpdateBtn">🔍 Check for Updates</button>
                 </div>
             </div>
@@ -1438,7 +1450,9 @@
                 filteredStocks = sortData([...filteredStocks], currentSortColumn, currentSortDirection);
             }
             
+            initializeColumnVisibility();
             displayStocks();
+            displayWatchlist();
             updateLastUpdated();
             updateRecordCounter();
         });
@@ -1467,6 +1481,11 @@
         ipcRenderer.on('update-error', (event, error) => {
             console.error('Update error:', error);
             showStatus('Update error: ' + error, 'error');
+        });
+
+        // Handle open-settings event from tray
+        ipcRenderer.on('open-settings', () => {
+            showSettingsModal();
         });
 
         // Simple update system - no complex event handlers needed
@@ -1509,6 +1528,8 @@
             try {
                 const settings = await ipcRenderer.invoke('get-settings');
                 document.getElementById('autoUpdateEnabled').checked = settings.autoUpdate;
+                document.getElementById('minimizeToTray').checked = settings.minimizeToTray !== false; // Default to true
+                document.getElementById('closeToTray').checked = settings.closeToTray !== false; // Default to true
             } catch (error) {
                 console.error('Error loading settings:', error);
             }
@@ -1517,7 +1538,14 @@
         async function saveSettings() {
             try {
                 const autoUpdateEnabled = document.getElementById('autoUpdateEnabled').checked;
-                await ipcRenderer.invoke('update-settings', { autoUpdate: autoUpdateEnabled });
+                const minimizeToTray = document.getElementById('minimizeToTray').checked;
+                const closeToTray = document.getElementById('closeToTray').checked;
+                
+                await ipcRenderer.invoke('update-settings', { 
+                    autoUpdate: autoUpdateEnabled,
+                    minimizeToTray: minimizeToTray,
+                    closeToTray: closeToTray
+                });
                 showStatus('Settings saved successfully', 'success');
                 hideSettingsModal();
             } catch (error) {

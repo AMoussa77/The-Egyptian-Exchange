@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -85,10 +85,13 @@ try {
 }
 
 let mainWindow;
+let tray = null;
 let stockData = [];
 let scraper;
 let settings = {
     autoUpdate: true,
+    minimizeToTray: true,
+    closeToTray: true,
     windowBounds: {
         width: 1200,
         height: 800,
@@ -232,6 +235,99 @@ function createWindow() {
       settings.windowBounds.height = bounds.height;
       console.log('📍 Window resized, saving size:', bounds.width, bounds.height);
       saveSettings();
+    }
+  });
+  
+  // Handle minimize to tray
+  mainWindow.on('minimize', (event) => {
+    if (settings.minimizeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  });
+  
+  // Handle close to tray
+  mainWindow.on('close', (event) => {
+    if (settings.closeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  });
+}
+
+// Create system tray
+function createTray() {
+  if (tray) {
+    tray.destroy();
+  }
+  
+  // Create a simple tray icon (using a data URL for a basic icon)
+  const iconPath = path.join(__dirname, 'assets', 'icon.png');
+  let icon;
+  
+  try {
+    if (fs.existsSync(iconPath)) {
+      icon = nativeImage.createFromPath(iconPath);
+    } else {
+      // Create a simple 16x16 icon if no icon file exists
+      icon = nativeImage.createEmpty();
+    }
+  } catch (error) {
+    console.error('Error creating tray icon:', error);
+    icon = nativeImage.createEmpty();
+  }
+  
+  tray = new Tray(icon);
+  
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show Egyptian Exchange',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      }
+    },
+    {
+      label: 'Refresh Data',
+      click: () => {
+        refreshStockData();
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Settings',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+          // Send a message to open settings
+          mainWindow.webContents.send('open-settings');
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        app.quit();
+      }
+    }
+  ]);
+  
+  tray.setToolTip('Egyptian Exchange Stocks');
+  tray.setContextMenu(contextMenu);
+  
+  // Handle tray click
+  tray.on('click', () => {
+    if (mainWindow) {
+      if (mainWindow.isVisible()) {
+        mainWindow.hide();
+      } else {
+        mainWindow.show();
+        mainWindow.focus();
+      }
     }
   });
 }
@@ -476,9 +572,14 @@ ipcMain.handle('open-download-page', () => {
         return settings;
     });
 
-    ipcMain.handle('get-app-version', () => {
-        return app.getVersion();
-    });
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
+// Handle open-settings event from tray
+ipcMain.on('open-settings', () => {
+  // This will be handled by the renderer process
+});
 
 ipcMain.handle('update-settings', (event, newSettings) => {
   settings = { ...settings, ...newSettings };
@@ -501,6 +602,7 @@ app.commandLine.appendSwitch('--disable-software-rasterizer');
 
 app.whenReady().then(() => {
   createWindow();
+  createTray();
   
   // Check for updates after a short delay to allow window to load
   setTimeout(() => {
@@ -508,10 +610,17 @@ app.whenReady().then(() => {
   }, 2000);
 });
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', (event) => {
   if (scraper) {
     scraper.stopAutoUpdate();
   }
+  
+  // Don't quit the app if close to tray is enabled
+  if (settings.closeToTray) {
+    event.preventDefault();
+    return;
+  }
+  
   if (process.platform !== 'darwin') {
     app.quit();
   }
