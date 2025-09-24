@@ -758,16 +758,9 @@
                     <div id="updateReleaseNotes" class="release-notes"></div>
                     <p><strong>Release Date:</strong> <span id="updateReleaseDate"></span></p>
                 </div>
-                <div id="updateProgress" style="display: none;">
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill"></div>
-                    </div>
-                    <p id="progressText">Downloading update...</p>
-                </div>
             </div>
             <div class="modal-footer">
-                <button id="downloadUpdateBtn" class="btn" onclick="downloadUpdate()">📥 Download Update</button>
-                <button id="installUpdateBtn" class="btn" onclick="installUpdate()" style="display: none;">🚀 Install & Restart</button>
+                <button id="downloadUpdateBtn" class="btn" onclick="openDownloadPage()">📥 Download</button>
                 <button class="btn btn-secondary" onclick="hideUpdateModal()">Later</button>
             </div>
         </div>
@@ -795,6 +788,16 @@
                 <button class="btn" onclick="saveSettings()">💾 Save Settings</button>
                 <button class="btn btn-secondary" onclick="hideSettingsModal()">Cancel</button>
             </div>
+            <div style="
+                padding: 10px 20px;
+                background: rgba(20, 20, 40, 0.5);
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                text-align: center;
+                font-size: 0.75em;
+                color: #888;
+            ">
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.2</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+            </div>
         </div>
     </div>
 
@@ -817,6 +820,7 @@
         window.addEventListener('DOMContentLoaded', async () => {
             loadColumnVisibility();
             loadWatchlist();
+            loadAppVersion();
             startAutoRefresh();
         });
 
@@ -919,6 +923,28 @@
                 localStorage.setItem('egyptianStocksColumnVisibility', JSON.stringify(columnVisibility));
             } catch (error) {
                 console.error('Error saving column visibility:', error);
+            }
+        }
+
+        async function loadAppVersion() {
+            try {
+                // Get version from main process
+                const version = await ipcRenderer.invoke('get-app-version');
+                
+                // Update main footer
+                const mainVersionElement = document.getElementById('appVersion');
+                if (mainVersionElement) {
+                    mainVersionElement.textContent = version;
+                }
+                
+                // Update settings modal footer
+                const settingsVersionElement = document.getElementById('settingsAppVersion');
+                if (settingsVersionElement) {
+                    settingsVersionElement.textContent = version;
+                }
+            } catch (error) {
+                console.error('Error loading app version:', error);
+                // Keep default version if error occurs
             }
         }
 
@@ -1443,26 +1469,13 @@
             showStatus('Update error: ' + error, 'error');
         });
 
-        ipcRenderer.on('update-download-progress', (event, progressObj) => {
-            updateDownloadProgress(progressObj);
-        });
+        // Simple update system - no complex event handlers needed
 
-        ipcRenderer.on('update-downloaded', (event, info) => {
-            console.log('Update downloaded:', info);
-            showUpdateDownloaded();
-        });
-
-        // Update modal functions
+        // Simple update modal functions
         function showUpdateAvailableModal(info) {
             document.getElementById('updateVersion').textContent = info.version;
             document.getElementById('updateReleaseNotes').textContent = info.releaseNotes || 'No release notes available';
             document.getElementById('updateReleaseDate').textContent = new Date(info.releaseDate).toLocaleDateString();
-            
-            // Reset modal state
-            document.getElementById('updateInfo').style.display = 'block';
-            document.getElementById('updateProgress').style.display = 'none';
-            document.getElementById('downloadUpdateBtn').style.display = 'inline-block';
-            document.getElementById('installUpdateBtn').style.display = 'none';
             
             document.getElementById('updateModal').style.display = 'flex';
         }
@@ -1471,39 +1484,15 @@
             document.getElementById('updateModal').style.display = 'none';
         }
 
-        function downloadUpdate() {
-            document.getElementById('updateInfo').style.display = 'none';
-            document.getElementById('updateProgress').style.display = 'block';
-            document.getElementById('downloadUpdateBtn').style.display = 'none';
-            
-            ipcRenderer.invoke('download-update').catch(error => {
-                console.error('Download error:', error);
-                showStatus('Download failed: ' + error.message, 'error');
+        async function openDownloadPage() {
+            try {
+                await ipcRenderer.invoke('open-download-page');
                 hideUpdateModal();
-            });
-        }
-
-        function installUpdate() {
-            ipcRenderer.invoke('install-update');
-        }
-
-        function showUpdateDownloaded() {
-            document.getElementById('updateProgress').style.display = 'none';
-            document.getElementById('installUpdateBtn').style.display = 'inline-block';
-        }
-
-        function updateDownloadProgress(progressObj) {
-            const progressFill = document.getElementById('progressFill');
-            const progressText = document.getElementById('progressText');
-            
-            const percent = Math.round(progressObj.percent);
-            progressFill.style.width = percent + '%';
-            
-            const downloaded = Math.round(progressObj.transferred / 1024 / 1024);
-            const total = Math.round(progressObj.total / 1024 / 1024);
-            const speed = Math.round(progressObj.bytesPerSecond / 1024 / 1024);
-            
-            progressText.textContent = `Downloading... ${downloaded}MB / ${total}MB (${speed}MB/s)`;
+                showStatus('Download page opened in browser', 'success');
+            } catch (error) {
+                console.error('Error opening download page:', error);
+                showStatus('Error opening download page: ' + error.message, 'error');
+            }
         }
 
         // Settings modal functions
@@ -1563,5 +1552,23 @@
             }
         }
     </script>
+
+    <!-- Footer -->
+    <footer style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(20, 20, 40, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 8px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+        font-size: 0.8em;
+        color: #b0b0b0;
+        z-index: 1000;
+    ">
+        <p>The Egyptian Exchange App v<span id="appVersion">0.6.2</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+    </footer>
 </body>
 </html>

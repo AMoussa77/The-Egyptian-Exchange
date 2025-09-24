@@ -1,6 +1,6 @@
 {
   "name": "egyptian-exchange-stocks",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Desktop application for Egyptian Exchange stocks with real-time data from web scraping",
   "main": "main.js",
   "scripts": {
@@ -25,9 +25,7 @@
   },
   "dependencies": {
     "axios": "^1.12.2",
-    "cheerio": "^1.1.2",
-    "electron-log": "^5.4.3",
-    "electron-updater": "^6.1.7"
+    "cheerio": "^1.1.2"
   },
   "build": {
     "appId": "com.egyptianexchange.stocks",
@@ -47,21 +45,13 @@
       "!**/{appveyor.yml,.travis.yml,circle.yml}",
       "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
       "!Stocks.xlsx",
-      "node_modules/axios/**/*",
-      "node_modules/electron-log/**/*"
+      "node_modules/axios/**/*"
     ],
     "asarUnpack": [
-      "node_modules/electron-updater/**/*",
-      "node_modules/axios/**/*",
-      "node_modules/electron-log/**/*"
+      "node_modules/axios/**/*"
     ],
     "asar": true,
     "artifactName": "${productName}-${version}.${ext}",
-    "publish": {
-      "provider": "github",
-      "owner": "AMoussa77",
-      "repo": "The-Egyptian-Exchange"
-    },
     "win": {
       "target": [
         {
@@ -97,10 +87,6 @@
       "icon": "assets/icon.png"
     },
     "extraResources": [
-      {
-        "from": "node_modules/electron-updater",
-        "to": "electron-updater"
-      },
       {
         "from": "node_modules/axios",
         "to": "axios"
