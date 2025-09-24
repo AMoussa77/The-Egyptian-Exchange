@@ -834,6 +834,14 @@
             loadWatchlist();
             loadAppVersion();
             startAutoRefresh();
+            
+            // Wait a bit for DOM to be fully ready
+            setTimeout(() => {
+                // Show column toggles even without data
+                updateColumnToggleUI();
+                // Initialize table structure with default columns
+                initializeTableStructure();
+            }, 100);
         });
 
         // Listen for data-ready signal from main process
@@ -919,14 +927,16 @@
         }
 
         function loadColumnVisibility() {
-            const saved = localStorage.getItem('egyptianStocksColumnVisibility');
-            if (saved) {
-                try {
+            try {
+                const saved = localStorage.getItem('egyptianStocksColumnVisibility');
+                if (saved) {
                     columnVisibility = JSON.parse(saved);
-                } catch (error) {
-                    console.error('Error loading column visibility:', error);
+                } else {
                     columnVisibility = {};
                 }
+            } catch (error) {
+                console.error('Error loading column visibility:', error);
+                columnVisibility = {};
             }
         }
 
@@ -971,23 +981,85 @@
                     }
                 });
                 
-                // Remove columns that no longer exist
-                Object.keys(columnVisibility).forEach(column => {
-                    if (!availableColumns.includes(column)) {
-                        delete columnVisibility[column];
-                    }
-                });
+                // Keep saved settings for columns that don't exist in current data
+                // Don't delete them as they might be from previous data structures
+                // Only clean up if we're sure they're obsolete
                 
                 saveColumnVisibility();
                 updateColumnToggleUI();
             }
         }
 
+        function getDefaultColumns() {
+            // Return the actual Arabic column names used in Egyptian Exchange data
+            return [
+                'أقصى_سعر',      // Maximum price
+                'أدنى_سعر',      // Minimum price
+                'إغلاق',         // Close
+                'إقفال_سابق',    // Previous close
+                'التغير',        // Change
+                '%التغيير',      // Change %
+                'أعلى',          // High
+                'الأدنى',        // Low
+                'الطلب',         // Bid/Demand
+                'العرض',         // Offer/Supply
+                'أخر_سعر',       // Last price
+                'الإسم_المختصر', // Short name/Abbreviated name
+                'حجم_التداول'    // Trading volume
+            ];
+        }
+
+        function initializeTableStructure() {
+            // Initialize table headers with default columns even without data
+            const defaultColumns = getDefaultColumns();
+            const visibleColumns = defaultColumns.filter(column => columnVisibility[column] !== false);
+            
+            // Update All Stocks table headers
+            const allStocksHeaders = document.getElementById('allStocksHeaders');
+            if (allStocksHeaders) {
+                allStocksHeaders.innerHTML = visibleColumns.map(header => {
+                    return `
+                        <th class="sortable" onclick="sortStocks('${header}')">
+                            ${header}
+                            <span class="sort-indicator"></span>
+                        </th>
+                    `;
+                }).join('');
+            }
+            
+            // Update Watchlist table headers
+            const watchlistHeaders = document.getElementById('watchlistHeaders');
+            if (watchlistHeaders) {
+                watchlistHeaders.innerHTML = visibleColumns.map(header => {
+                    return `
+                        <th class="sortable" onclick="sortWatchlist('${header}')">
+                            ${header}
+                            <span class="sort-indicator"></span>
+                        </th>
+                    `;
+                }).join('');
+            }
+            
+            // Show empty state messages
+            const allStocksTable = document.getElementById('allStocksTable');
+            const watchlistTable = document.getElementById('watchlistTable');
+            const allStocksLoading = document.getElementById('allStocksLoading');
+            const watchlistLoading = document.getElementById('watchlistLoading');
+            
+            if (allStocksTable) allStocksTable.style.display = 'none';
+            if (watchlistTable) watchlistTable.style.display = 'none';
+            if (allStocksLoading) allStocksLoading.style.display = 'block';
+            if (watchlistLoading) watchlistLoading.style.display = 'none';
+        }
+
         function updateColumnToggleUI() {
             const toggleList = document.getElementById('columnToggleList');
-            if (!toggleList || availableColumns.length === 0) return;
+            if (!toggleList) return;
             
-            toggleList.innerHTML = availableColumns.map(column => {
+            // Use availableColumns if data is loaded, otherwise use default columns
+            const columnsToShow = availableColumns.length > 0 ? availableColumns : getDefaultColumns();
+            
+            toggleList.innerHTML = columnsToShow.map(column => {
                 const isVisible = columnVisibility[column] !== false;
                 return `
                     <div class="column-toggle-item">
@@ -1002,8 +1074,16 @@
         function toggleColumn(column, visible) {
             columnVisibility[column] = visible;
             saveColumnVisibility();
-            displayStocks();
-            displayWatchlist();
+            
+            // Update table structure immediately
+            if (allStocks.length > 0) {
+                // If data is available, use normal display functions
+                displayStocks();
+                displayWatchlist();
+            } else {
+                // If no data yet, just update the table structure
+                initializeTableStructure();
+            }
         }
 
         function toggleColumnPanel() {
@@ -1018,6 +1098,7 @@
                 btn.style.background = 'rgba(255, 255, 255, 0.95)';
             }
         }
+
 
         function sortData(data, column, direction) {
             return data.sort((a, b) => {

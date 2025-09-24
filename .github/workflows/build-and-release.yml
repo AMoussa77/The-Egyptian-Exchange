@@ -17,7 +17,19 @@ jobs:
     
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            arch: x64
+            target: win
+          - os: windows-latest
+            arch: ia32
+            target: win
+          - os: macos-latest
+            arch: x64
+            target: mac
+          - os: ubuntu-latest
+            arch: x64
+            target: linux
         
     steps:
     - name: Checkout code
@@ -40,14 +52,29 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Egyptian-Exchange-Stocks-${{ matrix.os }}-${{ github.sha }}
+        name: Egyptian-Exchange-Stocks-${{ matrix.target }}-${{ matrix.arch }}-${{ github.sha }}
         path: dist/
         
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+        
     - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: dist/*.exe,dist/*.dmg,dist/*.AppImage,dist/*.deb,dist/*.rpm
+        files: |
+          artifacts/*/Egyptian-Exchange-Stocks-*.exe
+          artifacts/*/Egyptian-Exchange-Stocks-*.dmg
+          artifacts/*/Egyptian-Exchange-Stocks-*.AppImage
+          artifacts/*/Egyptian-Exchange-Stocks-*.deb
+          artifacts/*/Egyptian-Exchange-Stocks-*.rpm
         generate_release_notes: true
         draft: false
         prerelease: false
@@ -56,16 +83,30 @@ jobs:
         body: |
           ## Egyptian Exchange Stocks Desktop Application
           
-          This release contains the Egyptian Exchange Stocks desktop application for ${{ matrix.os }}.
+          This release contains the Egyptian Exchange Stocks desktop application for all supported platforms.
           
           ### Features
-          - Real-time stock data from Excel files
-          - Cross-platform desktop application
+          - Real-time stock data from Egyptian Exchange
+          - Cross-platform desktop application (Windows 32-bit, Windows 64-bit, macOS, Linux)
           - Egyptian Exchange market data tracking
           - Automatic updates support
+          - Column visibility customization
+          - Watchlist functionality
           
           ### Installation
-          Download the appropriate installer for your operating system from the assets below.
+          Download the appropriate installer for your operating system and architecture:
+          
+          **Windows:**
+          - `Egyptian-Exchange-Stocks-*-win-ia32.exe` - Windows 32-bit
+          - `Egyptian-Exchange-Stocks-*-win-x64.exe` - Windows 64-bit
+          
+          **macOS:**
+          - `Egyptian-Exchange-Stocks-*-mac-x64.dmg` - macOS Intel
+          
+          **Linux:**
+          - `Egyptian-Exchange-Stocks-*-linux-x64.AppImage` - Linux AppImage
+          - `Egyptian-Exchange-Stocks-*-linux-x64.deb` - Debian/Ubuntu package
+          - `Egyptian-Exchange-Stocks-*-linux-x64.rpm` - Red Hat/Fedora package
           
           ### Auto-Updates
           This application supports automatic updates. Updates will be checked when the app starts and can be configured in the settings.

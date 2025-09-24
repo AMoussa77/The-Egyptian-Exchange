@@ -1,6 +1,6 @@
 {
   "name": "egyptian-exchange-stocks",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "description": "Desktop application for Egyptian Exchange stocks with real-time data from web scraping",
   "main": "main.js",
   "scripts": {
@@ -51,13 +51,14 @@
       "node_modules/axios/**/*"
     ],
     "asar": true,
-    "artifactName": "${productName}-${version}.${ext}",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "win": {
       "target": [
         {
           "target": "nsis",
           "arch": [
-            "x64"
+            "x64",
+            "ia32"
           ]
         }
       ],
@@ -70,7 +71,7 @@
       "allowElevation": true,
       "allowToChangeInstallationDirectory": false,
       "deleteAppDataOnUninstall": false,
-      "artifactName": "${productName}-${version}.${ext}"
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     },
     "mac": {
       "target": [

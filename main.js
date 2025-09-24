@@ -248,7 +248,7 @@ function createWindow() {
   
   // Handle close to tray
   mainWindow.on('close', (event) => {
-    if (settings.closeToTray) {
+    if (settings.closeToTray && !app.isQuiting) {
       event.preventDefault();
       mainWindow.hide();
     }
@@ -311,6 +311,8 @@ function createTray() {
     {
       label: 'Quit',
       click: () => {
+        // Force quit even if closeToTray is enabled
+        app.isQuiting = true;
         app.quit();
       }
     }
@@ -615,8 +617,8 @@ app.on('window-all-closed', (event) => {
     scraper.stopAutoUpdate();
   }
   
-  // Don't quit the app if close to tray is enabled
-  if (settings.closeToTray) {
+  // Don't quit the app if close to tray is enabled, unless explicitly quitting
+  if (settings.closeToTray && !app.isQuiting) {
     event.preventDefault();
     return;
   }
