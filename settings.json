@@ -1,7 +1,7 @@
 {
   "autoUpdate": true,
   "minimizeToTray": true,
-  "closeToTray": false,
+  "closeToTray": true,
   "windowBounds": {
     "width": 1388,
     "height": 848,

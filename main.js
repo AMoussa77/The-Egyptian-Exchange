@@ -100,13 +100,13 @@ let settings = {
     }
 };
 
-// Settings file path
-const settingsPath = path.join(__dirname, 'settings.json');
+// Settings file path - will be set when app is ready
+let settingsPath;
 
 // Load settings from file
 function loadSettings() {
   try {
-    if (fs.existsSync(settingsPath)) {
+    if (settingsPath && fs.existsSync(settingsPath)) {
       const data = fs.readFileSync(settingsPath, 'utf8');
       const loadedSettings = JSON.parse(data);
       // Merge with defaults to ensure all properties exist
@@ -121,8 +121,16 @@ function loadSettings() {
 // Save settings to file
 function saveSettings() {
   try {
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-    console.log('Settings saved to file');
+    if (settingsPath) {
+      // Ensure the directory exists
+      const settingsDir = path.dirname(settingsPath);
+      if (!fs.existsSync(settingsDir)) {
+        fs.mkdirSync(settingsDir, { recursive: true });
+      }
+      
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+      console.log('Settings saved to file');
+    }
   } catch (error) {
     console.error('Error saving settings:', error);
   }
@@ -603,6 +611,10 @@ app.commandLine.appendSwitch('--disable-gpu-sandbox');
 app.commandLine.appendSwitch('--disable-software-rasterizer');
 
 app.whenReady().then(() => {
+  // Initialize settings path after app is ready
+  settingsPath = path.join(app.getPath('userData'), 'settings.json');
+  console.log('Settings path:', settingsPath);
+  
   createWindow();
   createTray();
   

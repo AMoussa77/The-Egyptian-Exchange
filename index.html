@@ -808,7 +808,7 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.6</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.7</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
             </div>
         </div>
     </div>
@@ -1596,9 +1596,9 @@
         }
 
         // Settings modal functions
-        function showSettingsModal() {
-            loadSettings();
+        async function showSettingsModal() {
             document.getElementById('settingsModal').style.display = 'flex';
+            await loadSettings();
         }
 
         function hideSettingsModal() {
@@ -1607,29 +1607,59 @@
 
         async function loadSettings() {
             try {
+                // Small delay to ensure DOM is ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 const settings = await ipcRenderer.invoke('get-settings');
                 console.log('Loading settings:', settings);
                 
                 // Set checkbox states based on loaded settings
-                document.getElementById('autoUpdateEnabled').checked = settings.autoUpdate === true;
-                document.getElementById('minimizeToTray').checked = settings.minimizeToTray === true;
-                document.getElementById('closeToTray').checked = settings.closeToTray === true;
+                const autoUpdateCheckbox = document.getElementById('autoUpdateEnabled');
+                const minimizeToTrayCheckbox = document.getElementById('minimizeToTray');
+                const closeToTrayCheckbox = document.getElementById('closeToTray');
+                
+                if (autoUpdateCheckbox) {
+                    autoUpdateCheckbox.checked = settings.autoUpdate === true;
+                    console.log('Auto update checkbox set to:', autoUpdateCheckbox.checked);
+                }
+                if (minimizeToTrayCheckbox) {
+                    minimizeToTrayCheckbox.checked = settings.minimizeToTray === true;
+                    console.log('Minimize to tray checkbox set to:', minimizeToTrayCheckbox.checked);
+                }
+                if (closeToTrayCheckbox) {
+                    closeToTrayCheckbox.checked = settings.closeToTray === true;
+                    console.log('Close to tray checkbox set to:', closeToTrayCheckbox.checked);
+                }
                 
                 console.log('Settings loaded successfully');
             } catch (error) {
                 console.error('Error loading settings:', error);
                 // Set default values if loading fails
-                document.getElementById('autoUpdateEnabled').checked = true;
-                document.getElementById('minimizeToTray').checked = true;
-                document.getElementById('closeToTray').checked = true;
+                const autoUpdateCheckbox = document.getElementById('autoUpdateEnabled');
+                const minimizeToTrayCheckbox = document.getElementById('minimizeToTray');
+                const closeToTrayCheckbox = document.getElementById('closeToTray');
+                
+                if (autoUpdateCheckbox) autoUpdateCheckbox.checked = true;
+                if (minimizeToTrayCheckbox) minimizeToTrayCheckbox.checked = true;
+                if (closeToTrayCheckbox) closeToTrayCheckbox.checked = true;
             }
         }
 
         async function saveSettings() {
             try {
-                const autoUpdateEnabled = document.getElementById('autoUpdateEnabled').checked;
-                const minimizeToTray = document.getElementById('minimizeToTray').checked;
-                const closeToTray = document.getElementById('closeToTray').checked;
+                const autoUpdateCheckbox = document.getElementById('autoUpdateEnabled');
+                const minimizeToTrayCheckbox = document.getElementById('minimizeToTray');
+                const closeToTrayCheckbox = document.getElementById('closeToTray');
+                
+                if (!autoUpdateCheckbox || !minimizeToTrayCheckbox || !closeToTrayCheckbox) {
+                    console.error('One or more checkboxes not found');
+                    showStatus('Error: Settings checkboxes not found', 'error');
+                    return;
+                }
+                
+                const autoUpdateEnabled = autoUpdateCheckbox.checked;
+                const minimizeToTray = minimizeToTrayCheckbox.checked;
+                const closeToTray = closeToTrayCheckbox.checked;
                 
                 console.log('Saving settings:', {
                     autoUpdate: autoUpdateEnabled,
@@ -1651,6 +1681,7 @@
                 showStatus('Error saving settings: ' + error.message, 'error');
             }
         }
+
 
         async function checkForUpdates() {
             const checkUpdateBtn = document.getElementById('checkUpdateBtn');
@@ -1694,7 +1725,7 @@
         color: #b0b0b0;
         z-index: 1000;
     ">
-        <p>The Egyptian Exchange App v<span id="appVersion">0.6.6</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+        <p>The Egyptian Exchange App v<span id="appVersion">0.6.7</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
     </footer>
 </body>
 </html>
