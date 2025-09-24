@@ -35,17 +35,6 @@ A real-time desktop application for monitoring Egyptian Exchange stocks with liv
    npm start
    ```
 
-## Excel Query Refresh (Windows Only)
-
-The application includes automatic Excel query refresh using Windows COM automation:
-
-- **Automatic**: Queries are refreshed automatically on startup and every 30 seconds
-- **Manual**: Use the "🔄 Refresh" button to manually refresh queries and data
-- **Requirements**: 
-  - Windows operating system
-  - Microsoft Excel installed
-  - Internet connection required for live data
-
 ### How It Works
 
 1. **Web Scraping**: Uses `axios` to fetch HTML from Egyptian Exchange website
@@ -73,7 +62,6 @@ npm run build
 ├── main.js          # Main Electron process
 ├── index.html       # User interface
 ├── package.json     # Dependencies and scripts
-├── Stocks.xlsx      # Excel database file
 └── README.md        # This file
 ```
 
