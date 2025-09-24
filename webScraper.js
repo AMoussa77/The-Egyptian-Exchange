@@ -151,6 +151,7 @@ class EgyptianExchangeScraper {
     this.isRunning = false;
     this.intervalId = null;
     this.dataCallback = null;
+    this.isScraping = false; // Lock to prevent overlapping requests
     this.marketSettings = {
       marketOpenTime: { hour: 10, minute: 0 },
       marketCloseTime: { hour: 14, minute: 30 }
@@ -180,7 +181,17 @@ class EgyptianExchangeScraper {
   }
 
   async fetchStockData(forceRealData = false) {
+    // Check if already scraping
+    if (this.isScraping) {
+      console.log('⏳ Scraping already in progress, skipping request');
+      return null; // Return null to indicate request was skipped
+    }
+
     try {
+      // Set scraping lock
+      this.isScraping = true;
+      console.log('🔒 Scraping lock acquired');
+
       // Check if market is open before scraping (unless forced)
       if (!forceRealData && !this.isMarketOpen()) {
         console.log('⏰ Market is closed, skipping data scraping');
@@ -229,6 +240,10 @@ class EgyptianExchangeScraper {
       
       // Return mock data if scraping fails
       return this.getMockData();
+    } finally {
+      // Always release the scraping lock
+      this.isScraping = false;
+      console.log('🔓 Scraping lock released');
     }
   }
 
@@ -273,20 +288,27 @@ class EgyptianExchangeScraper {
         }
         
         if (cells.length >= 13) {
+          // Helper function to convert string to number, keeping original if not numeric
+          const parseNumeric = (value) => {
+            if (!value || value === '') return '';
+            const num = parseFloat(value);
+            return isNaN(num) ? value : num;
+          };
+
           const stock = {
-            'أقصى_سعر': cells[0] || '',
-            'أدنى_سعر': cells[1] || '',
-            'إغلاق': cells[2] || '',
-            'إقفال_سابق': cells[3] || '',
-            'التغير': cells[4] || '',
-            '%التغيير': cells[5] || '',
-            'أعلى': cells[6] || '',
-            'الأدنى': cells[7] || '',
-            'الطلب': cells[8] || '',
-            'العرض': cells[9] || '',
-            'أخر_سعر': cells[10] || '',
-            'الإسم_المختصر': cells[11] || '',
-            'حجم_التداول': cells[12] || ''
+            'أقصى_سعر': parseNumeric(cells[0]),
+            'أدنى_سعر': parseNumeric(cells[1]),
+            'إغلاق': parseNumeric(cells[2]),
+            'إقفال_سابق': parseNumeric(cells[3]),
+            'التغير': parseNumeric(cells[4]),
+            '%التغيير': parseNumeric(cells[5]),
+            'أعلى': parseNumeric(cells[6]),
+            'الأدنى': parseNumeric(cells[7]),
+            'الطلب': parseNumeric(cells[8]),
+            'العرض': parseNumeric(cells[9]),
+            'أخر_سعر': parseNumeric(cells[10]),
+            'الإسم_المختصر': cells[11] || '', // Keep as string
+            'حجم_التداول': parseNumeric(cells[12])
           };
 
           // Only add if we have a valid stock name
@@ -312,34 +334,34 @@ class EgyptianExchangeScraper {
     console.log('📊 Returning mock data due to scraping error');
     return [
       {
-        'أقصى_سعر': '1251',
-        'أدنى_سعر': '1187.5',
-        'إغلاق': '1250',
-        'إقفال_سابق': '1250',
-        'التغير': '0',
-        '%التغيير': '0',
-        'أعلى': '1251',
-        'الأدنى': '1250',
-        'الطلب': '1250',
-        'العرض': '1460',
-        'أخر_سعر': '1250',
+        'أقصى_سعر': 1251,
+        'أدنى_سعر': 1187.5,
+        'إغلاق': 1250,
+        'إقفال_سابق': 1250,
+        'التغير': 0,
+        '%التغيير': 0,
+        'أعلى': 1251,
+        'الأدنى': 1250,
+        'الطلب': 1250,
+        'العرض': 1460,
+        'أخر_سعر': 1250,
         'الإسم_المختصر': 'العز الدخيلة للصلب',
-        'حجم_التداول': '76'
+        'حجم_التداول': 76
       },
       {
-        'أقصى_سعر': '300.42',
-        'أدنى_سعر': '200.28',
-        'إغلاق': '0',
-        'إقفال_سابق': '250.35',
-        'التغير': '1.65',
-        '%التغيير': '0.66',
-        'أعلى': '252',
-        'الأدنى': '247',
-        'الطلب': '250.2',
-        'العرض': '252.5',
-        'أخر_سعر': '252',
+        'أقصى_سعر': 300.42,
+        'أدنى_سعر': 200.28,
+        'إغلاق': 0,
+        'إقفال_سابق': 250.35,
+        'التغير': 1.65,
+        '%التغيير': 0.66,
+        'أعلى': 252,
+        'الأدنى': 247,
+        'الطلب': 250.2,
+        'العرض': 252.5,
+        'أخر_سعر': 252,
         'الإسم_المختصر': 'مينا فارم للأدوية',
-        'حجم_التداول': '908'
+        'حجم_التداول': 908
       }
     ];
   }
@@ -367,6 +389,13 @@ class EgyptianExchangeScraper {
   async fetchAndNotify() {
     try {
       const data = await this.fetchStockData();
+      
+      // If data is null, scraping was skipped because another request is in progress
+      if (data === null) {
+        console.log('⏳ Skipping update - scraping already in progress');
+        return;
+      }
+      
       // Only update with real data, don't overwrite with mock data during auto-updates
       if (this.dataCallback && data && data.length > 10) { // Real data has 300+ stocks, mock has 2
         this.dataCallback(data);

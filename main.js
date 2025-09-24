@@ -53,19 +53,19 @@ try {
       console.log('⚠️ Web scraper not available, returning mock data');
       return [
         {
-          'أقصى_سعر': '1251',
-          'أدنى_سعر': '1187.5',
-          'إغلاق': '1250',
-          'إقفال_سابق': '1250',
-          'التغير': '0',
-          '%التغيير': '0',
-          'أعلى': '1251',
-          'الأدنى': '1250',
-          'الطلب': '1250',
-          'العرض': '1460',
-          'أخر_سعر': '1250',
+          'أقصى_سعر': 1251,
+          'أدنى_سعر': 1187.5,
+          'إغلاق': 1250,
+          'إقفال_سابق': 1250,
+          'التغير': 0,
+          '%التغيير': 0,
+          'أعلى': 1251,
+          'الأدنى': 1250,
+          'الطلب': 1250,
+          'العرض': 1460,
+          'أخر_سعر': 1250,
           'الإسم_المختصر': 'العز الدخيلة للصلب',
-          'حجم_التداول': '76'
+          'حجم_التداول': 76
         }
       ];
     }
@@ -107,7 +107,8 @@ let settings = {
         minute: 30
     },
     playNotification: true,
-    notificationVolume: 0.7
+    notificationVolume: 0.7,
+    updateInterval: 30
 };
 
 // Settings file path - will be set when app is ready
@@ -394,6 +395,13 @@ async function refreshStockData() {
   try {
     if (scraper) {
       const data = await scraper.fetchStockData(true); // Force real data on manual refresh
+      
+      // If data is null, scraping was skipped because another request is in progress
+      if (data === null) {
+        console.log('⏳ Refresh skipped - scraping already in progress');
+        return false; // Return false to indicate no update occurred
+      }
+      
       stockData = data;
       
       // Send updated data to renderer
@@ -435,8 +443,8 @@ ipcMain.handle('refresh-data', () => {
 });
 
 ipcMain.handle('refresh-queries-and-data', async () => {
-  await refreshStockData();
-  return stockData;
+  const success = await refreshStockData();
+  return { data: stockData, success: success };
 });
 
 ipcMain.handle('refresh-queries-only', async () => {
@@ -623,6 +631,14 @@ ipcMain.handle('update-settings', (event, newSettings) => {
     // Update scraper with new market settings
     if (scraper) {
       scraper.updateMarketSettings(settings);
+    }
+  }
+  
+  // If update interval changed, update scraper interval
+  if (newSettings.updateInterval !== undefined) {
+    if (scraper) {
+      scraper.setUpdateInterval(newSettings.updateInterval * 1000); // Convert seconds to milliseconds
+      console.log(`⏰ Update interval changed to ${newSettings.updateInterval} seconds`);
     }
   }
   

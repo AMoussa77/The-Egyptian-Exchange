@@ -46,6 +46,9 @@
         .record-counter {
             margin: 5px 0;
             font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .market-status {
@@ -87,6 +90,15 @@
             border: 1px solid rgba(0, 150, 255, 0.3);
             color: #00bfff;
             font-weight: 500;
+        }
+
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 150, 255, 0.3);
+            border-top: 2px solid #00bfff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
         .header h1 {
@@ -794,6 +806,7 @@
             </div>
             <div class="record-counter">
                 <span id="recordCount">📊 Loading...</span>
+                <div id="loadingSpinner" class="loading-spinner" style="display: none;"></div>
             </div>
             <div class="controls">
                 <button class="btn" onclick="refreshQueriesAndData()">🔄 Refresh</button>
@@ -946,6 +959,11 @@
                     <input type="time" id="marketCloseTime" value="14:30">
                 </div>
                 <div class="setting-item">
+                    <label for="updateInterval">Data Update Interval (seconds):</label>
+                    <input type="number" id="updateInterval" min="5" max="300" step="5" value="30" style="width: 80px; margin-right: 10px;">
+                    <span id="intervalDisplay">30 seconds</span>
+                </div>
+                <div class="setting-item">
                     <button class="btn" onclick="checkForUpdates()" id="checkUpdateBtn">🔍 Check for Updates</button>
                 </div>
             </div>
@@ -961,7 +979,7 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.8</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.9</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
             </div>
         </div>
     </div>
@@ -988,6 +1006,7 @@
             loadAppVersion();
             startAutoRefresh();
             setupVolumeSlider();
+            setupUpdateInterval();
             
             // Initialize market status indicator
             updateMarketStatusIndicator({ status: 'loading' });
@@ -1262,6 +1281,12 @@
                 let aVal = a[column] || '';
                 let bVal = b[column] || '';
                 
+                // Check if values are already numbers
+                if (typeof aVal === 'number' && typeof bVal === 'number') {
+                    // Direct numeric comparison
+                    return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+                
                 // Try to parse as numbers for numeric columns
                 const aNum = parseFloat(aVal);
                 const bNum = parseFloat(bVal);
@@ -1341,18 +1366,30 @@
                 const row = visibleHeaders.map(header => {
                     let value = stock[header] || '';
                     let className = '';
+                    let displayValue = value;
+                    
+                    // Format numeric values for display
+                    if (typeof value === 'number' && !isNaN(value)) {
+                        if (header === '%التغيير' || header === 'Changes %') {
+                            displayValue = value.toFixed(2) + '%';
+                        } else if (header === 'حجم_التداول') {
+                            displayValue = value.toLocaleString();
+                        } else {
+                            displayValue = value.toFixed(2);
+                        }
+                    }
                     
                     // Style based on column content
                     if (header === 'أخر_سعر' || header === 'Last Price') {
                         className = 'price-neutral';
                     } else if (header === '%التغيير' || header === 'Changes %') {
-                        const numValue = parseFloat(value);
+                        const numValue = typeof value === 'number' ? value : parseFloat(value);
                         if (numValue > 0) className = 'price-positive';
                         else if (numValue < 0) className = 'price-negative';
                         else className = 'price-neutral';
                     }
                     
-                    return `<td class="${className}">${value}</td>`;
+                    return `<td class="${className}">${displayValue}</td>`;
                 }).join('');
                 
                 // Check if stock is already in watchlist
@@ -1399,18 +1436,30 @@
                 const row = visibleHeaders.map(header => {
                     let value = stock[header] || '';
                     let className = '';
+                    let displayValue = value;
+                    
+                    // Format numeric values for display
+                    if (typeof value === 'number' && !isNaN(value)) {
+                        if (header === '%التغيير' || header === 'Changes %') {
+                            displayValue = value.toFixed(2) + '%';
+                        } else if (header === 'حجم_التداول') {
+                            displayValue = value.toLocaleString();
+                        } else {
+                            displayValue = value.toFixed(2);
+                        }
+                    }
                     
                     // Style based on column content
                     if (header === 'أخر_سعر' || header === 'Last Price') {
                         className = 'price-neutral';
                     } else if (header === '%التغيير' || header === 'Changes %') {
-                        const numValue = parseFloat(value);
+                        const numValue = typeof value === 'number' ? value : parseFloat(value);
                         if (numValue > 0) className = 'price-positive';
                         else if (numValue < 0) className = 'price-negative';
                         else className = 'price-neutral';
                     }
                     
-                    return `<td class="${className}">${value}</td>`;
+                    return `<td class="${className}">${displayValue}</td>`;
                 }).join('');
                 
                 const actionButton = `<button class="btn btn-small btn-remove" onclick="removeFromWatchlistByWatchlistIndex(${index})">Remove</button>`;
@@ -1556,8 +1605,22 @@
         async function refreshQueriesAndData() {
             try {
                 showUpdating();
-                const data = await ipcRenderer.invoke('refresh-queries-and-data');
-                allStocks = data;
+                const response = await ipcRenderer.invoke('refresh-queries-and-data');
+                
+                // Check if refresh was successful or skipped
+                if (!response.success) {
+                    // Hide loading spinner when refresh is skipped (no status message)
+                    const loadingSpinner = document.getElementById('loadingSpinner');
+                    if (loadingSpinner) {
+                        loadingSpinner.style.display = 'none';
+                    }
+                    return;
+                }
+                
+                allStocks = response.data;
+                
+                // Update watchlist with fresh data
+                updateWatchlistWithFreshData();
                 
                 // Preserve current search filter
                 if (currentSearchTerm) {
@@ -1576,10 +1639,16 @@
                 }
                 
                 displayStocks();
+                displayWatchlist();
                 updateLastUpdated();
                 updateRecordCounter();
             } catch (error) {
                 showStatus('Error refreshing data: ' + error.message, 'error');
+                // Hide loading spinner on error
+                const loadingSpinner = document.getElementById('loadingSpinner');
+                if (loadingSpinner) {
+                    loadingSpinner.style.display = 'none';
+                }
             }
         }
 
@@ -1633,6 +1702,12 @@
             lastUpdatedElement.textContent = `Last updated: ${timestamp}`;
             
             lastUpdatedElement.classList.remove('updating');
+            
+            // Hide loading spinner
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'none';
+            }
         }
 
         function updateRecordCounter() {
@@ -1656,21 +1731,99 @@
         }
 
         function showUpdating() {
-            const lastUpdatedElement = document.getElementById('lastUpdated');
-            lastUpdatedElement.textContent = 'Updating data...';
-            lastUpdatedElement.classList.add('updating');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'block';
+            }
         }
 
         function startAutoRefresh() {
-            // Auto-refresh every 30 seconds with query refresh
-            setInterval(() => {
-                refreshQueriesAndData();
-            }, 30000);
+            // Auto-refresh with interval from settings
+            loadRefreshInterval();
+        }
+
+        async function loadRefreshInterval() {
+            try {
+                const settings = await ipcRenderer.invoke('get-settings');
+                const interval = (settings.updateInterval || 30) * 1000; // Convert seconds to milliseconds
+                
+                console.log(`⏰ Setting auto-refresh interval to ${settings.updateInterval || 30} seconds`);
+                
+                // Clear any existing interval
+                if (window.refreshIntervalId) {
+                    clearInterval(window.refreshIntervalId);
+                }
+                
+                // Set new interval
+                window.refreshIntervalId = setInterval(() => {
+                    refreshQueriesAndData();
+                }, interval);
+            } catch (error) {
+                console.error('Error loading refresh interval:', error);
+                // Fallback to 30 seconds
+                window.refreshIntervalId = setInterval(() => {
+                    refreshQueriesAndData();
+                }, 30000);
+            }
+        }
+
+        function updateWatchlistWithFreshData() {
+            if (watchlist.length === 0 || allStocks.length === 0) {
+                return;
+            }
+
+            console.log('🔄 Updating watchlist with fresh data...');
+            console.log('📊 Watchlist before update:', watchlist.length, 'stocks');
+            console.log('📊 Fresh data available:', allStocks.length, 'stocks');
+
+            // Create a map of fresh data by stock name for quick lookup
+            const freshDataMap = new Map();
+            allStocks.forEach(stock => {
+                const stockName = stock['الإسم_المختصر'];
+                if (stockName) {
+                    freshDataMap.set(stockName, stock);
+                }
+            });
+
+            // Update watchlist with fresh data
+            let updatedCount = 0;
+            watchlist.forEach((watchlistStock, index) => {
+                const stockName = watchlistStock['الإسم_المختصر'];
+                if (stockName && freshDataMap.has(stockName)) {
+                    const freshStock = freshDataMap.get(stockName);
+                    watchlist[index] = freshStock;
+                    updatedCount++;
+                }
+            });
+
+            // Update filtered watchlist
+            if (currentWatchlistSearchTerm) {
+                filteredWatchlist = watchlist.filter(stock => {
+                    return Object.values(stock).some(value => 
+                        String(value).toLowerCase().includes(currentWatchlistSearchTerm.toLowerCase())
+                    );
+                });
+            } else {
+                filteredWatchlist = [...watchlist];
+            }
+
+            // Reapply sorting if there's an active sort
+            if (watchlistSortColumn) {
+                filteredWatchlist = sortData([...filteredWatchlist], watchlistSortColumn, watchlistSortDirection);
+            }
+
+            // Save updated watchlist
+            saveWatchlist();
+
+            console.log(`✅ Watchlist updated: ${updatedCount}/${watchlist.length} stocks refreshed with fresh data`);
         }
 
         // Listen for real-time updates from main process
         ipcRenderer.on('stock-data-updated', (event, data) => {
             allStocks = data;
+            
+            // Update watchlist with fresh data
+            updateWatchlistWithFreshData();
             
             // Preserve current search filter
             if (currentSearchTerm) {
@@ -1888,6 +2041,39 @@
             }
         }
 
+        // Setup update interval input
+        function setupUpdateInterval() {
+            const updateIntervalInput = document.getElementById('updateInterval');
+            const intervalDisplay = document.getElementById('intervalDisplay');
+            
+            if (updateIntervalInput && intervalDisplay) {
+                // Update interval display
+                function updateIntervalDisplay() {
+                    const interval = parseInt(updateIntervalInput.value);
+                    intervalDisplay.textContent = interval + ' seconds';
+                }
+                
+                // Real-time interval updates
+                updateIntervalInput.addEventListener('input', updateIntervalDisplay);
+                
+                // Validate interval range
+                updateIntervalInput.addEventListener('change', () => {
+                    let interval = parseInt(updateIntervalInput.value);
+                    
+                    // Ensure interval is within valid range
+                    if (interval < 5) {
+                        interval = 5;
+                        updateIntervalInput.value = 5;
+                    } else if (interval > 300) {
+                        interval = 300;
+                        updateIntervalInput.value = 300;
+                    }
+                    
+                    intervalDisplay.textContent = interval + ' seconds';
+                });
+            }
+        }
+
         // Load initial volume from settings
         async function loadInitialVolume() {
             try {
@@ -2048,6 +2234,16 @@
                     console.log('Market close time set to:', closeTime);
                 }
                 
+                // Set update interval
+                const updateIntervalInput = document.getElementById('updateInterval');
+                const intervalDisplay = document.getElementById('intervalDisplay');
+                
+                if (updateIntervalInput && intervalDisplay && settings.updateInterval !== undefined) {
+                    updateIntervalInput.value = settings.updateInterval;
+                    intervalDisplay.textContent = settings.updateInterval + ' seconds';
+                    console.log('Update interval set to:', settings.updateInterval, 'seconds');
+                }
+                
                 console.log('Settings loaded successfully');
             } catch (error) {
                 console.error('Error loading settings:', error);
@@ -2073,9 +2269,10 @@
                 const volumeSlider = document.getElementById('notificationVolume');
                 const marketOpenTimeInput = document.getElementById('marketOpenTime');
                 const marketCloseTimeInput = document.getElementById('marketCloseTime');
+                const updateIntervalInput = document.getElementById('updateInterval');
                 
                 if (!autoUpdateCheckbox || !minimizeToTrayCheckbox || !closeToTrayCheckbox || 
-                    !playNotificationCheckbox || !volumeSlider || !marketOpenTimeInput || !marketCloseTimeInput) {
+                    !playNotificationCheckbox || !volumeSlider || !marketOpenTimeInput || !marketCloseTimeInput || !updateIntervalInput) {
                     console.error('One or more form elements not found');
                     showStatus('Error: Settings form elements not found', 'error');
                     return;
@@ -2086,6 +2283,7 @@
                 const closeToTray = closeToTrayCheckbox.checked;
                 const playNotification = playNotificationCheckbox.checked;
                 const notificationVolume = parseFloat(volumeSlider.value);
+                const updateInterval = parseInt(updateIntervalInput.value);
                 
                 // Parse time inputs
                 const openTimeValue = marketOpenTimeInput.value;
@@ -2104,7 +2302,8 @@
                     playNotification: playNotification,
                     notificationVolume: notificationVolume,
                     marketOpenTime: marketOpenTime,
-                    marketCloseTime: marketCloseTime
+                    marketCloseTime: marketCloseTime,
+                    updateInterval: updateInterval
                 });
                 
                 const result = await ipcRenderer.invoke('update-settings', { 
@@ -2114,10 +2313,17 @@
                     playNotification: playNotification,
                     notificationVolume: notificationVolume,
                     marketOpenTime: marketOpenTime,
-                    marketCloseTime: marketCloseTime
+                    marketCloseTime: marketCloseTime,
+                    updateInterval: updateInterval
                 });
                 
                 console.log('Settings saved successfully:', result);
+                
+                // Reload refresh interval if it was changed
+                if (updateInterval !== undefined) {
+                    loadRefreshInterval();
+                }
+                
                 showStatus('Settings saved successfully', 'success');
                 hideSettingsModal();
             } catch (error) {
@@ -2169,7 +2375,7 @@
         color: #b0b0b0;
         z-index: 1000;
     ">
-        <p>The Egyptian Exchange App v<span id="appVersion">0.6.8</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+        <p>The Egyptian Exchange App v<span id="appVersion">0.6.9</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
     </footer>
 </body>
 </html>
