@@ -48,6 +48,38 @@
             font-size: 0.9em;
         }
 
+        .market-status {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .market-status-indicator {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .market-status-indicator.open {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid rgba(46, 204, 113, 0.4);
+            color: #2ecc71;
+        }
+
+        .market-status-indicator.closed {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid rgba(231, 76, 60, 0.4);
+            color: #e74c3c;
+        }
+
+        .market-status-indicator.loading {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #ffc107;
+        }
+
         .record-counter span {
             background: rgba(0, 150, 255, 0.2);
             padding: 4px 8px;
@@ -618,6 +650,104 @@
             cursor: pointer;
         }
 
+        .setting-item input[type="time"] {
+            background: rgba(40, 40, 60, 0.8);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            margin-left: 10px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .setting-item input[type="time"]:focus {
+            border-color: rgba(74, 144, 226, 0.5);
+            box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+        }
+
+        .setting-item label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #e0e0e0;
+            min-width: 150px;
+        }
+
+        .setting-item {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .setting-item .btn-small {
+            margin-left: 10px;
+            font-size: 11px;
+            padding: 4px 8px;
+        }
+
+        .setting-item input[type="range"] {
+            width: 150px;
+            margin: 0 10px;
+            background: transparent;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .setting-item input[type="range"]::-webkit-slider-track {
+            background: rgba(40, 40, 60, 0.8);
+            height: 6px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .setting-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .setting-item input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+        }
+
+        .setting-item input[type="range"]::-moz-range-track {
+            background: rgba(40, 40, 60, 0.8);
+            height: 6px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .setting-item input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        #volumeDisplay {
+            color: #4a90e2;
+            font-weight: 600;
+            font-size: 12px;
+            min-width: 35px;
+            text-align: center;
+        }
+
 
         .release-notes {
             background: rgba(40, 40, 60, 0.5);
@@ -659,6 +789,9 @@
         <div class="header-left">
             <h1>🏛️ Egyptian Exchange Stocks</h1>
             <p>Real-time stock data from web scraping</p>
+            <div class="market-status">
+                <span id="marketStatus" class="market-status-indicator">📊 Loading...</span>
+            </div>
             <div class="record-counter">
                 <span id="recordCount">📊 Loading...</span>
             </div>
@@ -793,6 +926,26 @@
                     </label>
                 </div>
                 <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="playNotification">
+                        Play Notification
+                    </label>
+                    <button class="btn btn-small" onclick="testNotificationSound()" id="testSoundBtn">🔊 Test Sound</button>
+                </div>
+                <div class="setting-item">
+                    <label for="notificationVolume">Notification Volume:</label>
+                    <input type="range" id="notificationVolume" min="0" max="1" step="0.1" value="0.7">
+                    <span id="volumeDisplay">70%</span>
+                </div>
+                <div class="setting-item">
+                    <label for="marketOpenTime">Market Open Time:</label>
+                    <input type="time" id="marketOpenTime" value="10:00">
+                </div>
+                <div class="setting-item">
+                    <label for="marketCloseTime">Market Close Time:</label>
+                    <input type="time" id="marketCloseTime" value="14:30">
+                </div>
+                <div class="setting-item">
                     <button class="btn" onclick="checkForUpdates()" id="checkUpdateBtn">🔍 Check for Updates</button>
                 </div>
             </div>
@@ -808,7 +961,7 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.7</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.8</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
             </div>
         </div>
     </div>
@@ -834,6 +987,10 @@
             loadWatchlist();
             loadAppVersion();
             startAutoRefresh();
+            setupVolumeSlider();
+            
+            // Initialize market status indicator
+            updateMarketStatusIndicator({ status: 'loading' });
             
             // Wait a bit for DOM to be fully ready
             setTimeout(() => {
@@ -1569,6 +1726,235 @@
             showSettingsModal();
         });
 
+        // Handle market status updates
+        ipcRenderer.on('market-status-updated', (event, data) => {
+            console.log('Market status updated:', data);
+            updateMarketStatusIndicator(data);
+        });
+
+        // Update market status indicator in header
+        function updateMarketStatusIndicator(data) {
+            const marketStatusElement = document.getElementById('marketStatus');
+            if (!marketStatusElement) return;
+
+            // Remove all existing classes
+            marketStatusElement.className = 'market-status-indicator';
+            
+            if (data.status === 'open') {
+                marketStatusElement.textContent = '🟢 Market Open';
+                marketStatusElement.classList.add('open');
+            } else if (data.status === 'closed') {
+                marketStatusElement.textContent = '🔴 Market Closed';
+                marketStatusElement.classList.add('closed');
+            } else {
+                marketStatusElement.textContent = '📊 Loading...';
+                marketStatusElement.classList.add('loading');
+            }
+        }
+
+        // Handle notification display
+        ipcRenderer.on('show-notification', (event, message) => {
+            console.log('Notification:', message);
+            showStatus(message, 'info');
+        });
+
+        // Audio handling
+        let currentAudio = null;
+        let currentVolume = 0.7;
+
+        // Listen for audio playback requests from main process
+        ipcRenderer.on('play-audio', (event, data) => {
+            console.log('Received audio play request:', data);
+            playInternalAudio(data.filePath, data.volume);
+        });
+
+        // Listen for beep sound requests from main process
+        ipcRenderer.on('play-beep', (event, data) => {
+            console.log('Received beep play request:', data);
+            playBeepSound(data.volume);
+        });
+
+        // Internal audio player
+        function playInternalAudio(filePath, volume = 0.7) {
+            try {
+                console.log('Playing internal audio:', filePath, 'Volume:', volume);
+                
+                // Stop any currently playing audio
+                stopCurrentAudio();
+                
+                // Create audio element
+                const audio = new Audio();
+                audio.src = filePath;
+                audio.volume = volume;
+                audio.preload = 'auto';
+                
+                // Store reference to current audio
+                currentAudio = audio;
+                
+                // Play the audio
+                audio.play().then(() => {
+                    console.log('Audio started playing successfully');
+                }).catch((error) => {
+                    console.error('Error playing audio:', error);
+                    // Fallback to beep if audio fails
+                    playBeepSound(volume);
+                });
+                
+                // Clean up after audio ends
+                audio.addEventListener('ended', () => {
+                    console.log('Audio finished playing');
+                    stopCurrentAudio();
+                });
+                
+                // Handle errors
+                audio.addEventListener('error', (error) => {
+                    console.error('Audio error:', error);
+                    playBeepSound(volume);
+                });
+                
+            } catch (error) {
+                console.error('Error setting up internal audio:', error);
+                playBeepSound(volume);
+            }
+        }
+
+        // Stop current audio
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                console.log('Stopping current audio');
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio.remove();
+                currentAudio = null;
+            }
+        }
+
+        // Fallback beep sound
+        function playBeepSound(volume = 0.7) {
+            try {
+                // Create a simple beep sound using Web Audio API
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+                oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.2);
+                
+                // Use the volume parameter
+                const beepVolume = volume * 0.3; // Scale down the beep volume
+                gainNode.gain.setValueAtTime(beepVolume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+                
+            } catch (error) {
+                console.error('Error playing beep sound:', error);
+            }
+        }
+
+        // Setup volume slider
+        function setupVolumeSlider() {
+            const volumeSlider = document.getElementById('notificationVolume');
+            const volumeDisplay = document.getElementById('volumeDisplay');
+            
+            if (volumeSlider && volumeDisplay) {
+                // Load initial volume from settings
+                loadInitialVolume();
+                
+                // Update volume display
+                function updateVolumeDisplay() {
+                    const volume = parseFloat(volumeSlider.value);
+                    currentVolume = volume;
+                    volumeDisplay.textContent = Math.round(volume * 100) + '%';
+                    
+                    // Update current audio volume in real-time
+                    updateCurrentAudioVolume(volume);
+                }
+                
+                // Real-time volume updates
+                volumeSlider.addEventListener('input', updateVolumeDisplay);
+                
+                // Save volume setting when user stops dragging
+                volumeSlider.addEventListener('change', () => {
+                    const volume = parseFloat(volumeSlider.value);
+                    currentVolume = volume;
+                    saveVolumeSetting(volume);
+                });
+            }
+        }
+
+        // Load initial volume from settings
+        async function loadInitialVolume() {
+            try {
+                const settings = await ipcRenderer.invoke('get-settings');
+                const volume = settings.notificationVolume || 0.7;
+                
+                const volumeSlider = document.getElementById('notificationVolume');
+                const volumeDisplay = document.getElementById('volumeDisplay');
+                
+                if (volumeSlider && volumeDisplay) {
+                    volumeSlider.value = volume;
+                    currentVolume = volume;
+                    volumeDisplay.textContent = Math.round(volume * 100) + '%';
+                    console.log('Volume initialized on startup:', volume);
+                }
+            } catch (error) {
+                console.error('Error loading initial volume:', error);
+                // Set default volume
+                currentVolume = 0.7;
+            }
+        }
+
+        // Update current audio volume
+        function updateCurrentAudioVolume(volume) {
+            if (currentAudio) {
+                currentAudio.volume = volume;
+                console.log('Updated audio volume to:', volume);
+            }
+        }
+
+        // Save volume setting
+        function saveVolumeSetting(volume) {
+            // Send to main process to save
+            ipcRenderer.invoke('update-settings', {
+                notificationVolume: volume
+            });
+            console.log('Volume setting saved:', volume);
+        }
+
+        // Test notification sound function
+        async function testNotificationSound() {
+            try {
+                const testSoundBtn = document.getElementById('testSoundBtn');
+                const originalText = testSoundBtn.textContent;
+                
+                // Disable button and show testing status
+                testSoundBtn.disabled = true;
+                testSoundBtn.textContent = '🔊 Testing...';
+                
+                // Play the notification sound directly using internal audio with current volume
+                const soundPath = 'assets/Bell Sound Effects.m4a';
+                playInternalAudio(soundPath, currentVolume);
+                
+                showStatus('Test sound played successfully', 'success');
+            } catch (error) {
+                console.error('Error testing notification sound:', error);
+                showStatus('Error testing sound: ' + error.message, 'error');
+            } finally {
+                // Re-enable button after a short delay
+                setTimeout(() => {
+                    const testSoundBtn = document.getElementById('testSoundBtn');
+                    testSoundBtn.disabled = false;
+                    testSoundBtn.textContent = '🔊 Test Sound';
+                }, 1000);
+            }
+        }
+
         // Simple update system - no complex event handlers needed
 
         // Simple update modal functions
@@ -1617,6 +2003,7 @@
                 const autoUpdateCheckbox = document.getElementById('autoUpdateEnabled');
                 const minimizeToTrayCheckbox = document.getElementById('minimizeToTray');
                 const closeToTrayCheckbox = document.getElementById('closeToTray');
+                const playNotificationCheckbox = document.getElementById('playNotification');
                 
                 if (autoUpdateCheckbox) {
                     autoUpdateCheckbox.checked = settings.autoUpdate === true;
@@ -1630,6 +2017,36 @@
                     closeToTrayCheckbox.checked = settings.closeToTray === true;
                     console.log('Close to tray checkbox set to:', closeToTrayCheckbox.checked);
                 }
+                if (playNotificationCheckbox) {
+                    playNotificationCheckbox.checked = settings.playNotification === true;
+                    console.log('Play notification checkbox set to:', playNotificationCheckbox.checked);
+                }
+                
+                // Set volume slider
+                const volumeSlider = document.getElementById('notificationVolume');
+                const volumeDisplay = document.getElementById('volumeDisplay');
+                
+                if (volumeSlider && volumeDisplay && settings.notificationVolume !== undefined) {
+                    volumeSlider.value = settings.notificationVolume;
+                    currentVolume = settings.notificationVolume;
+                    volumeDisplay.textContent = Math.round(settings.notificationVolume * 100) + '%';
+                    console.log('Volume slider set to:', settings.notificationVolume);
+                }
+                
+                // Set time inputs
+                const marketOpenTimeInput = document.getElementById('marketOpenTime');
+                const marketCloseTimeInput = document.getElementById('marketCloseTime');
+                
+                if (marketOpenTimeInput && settings.marketOpenTime) {
+                    const openTime = `${settings.marketOpenTime.hour.toString().padStart(2, '0')}:${settings.marketOpenTime.minute.toString().padStart(2, '0')}`;
+                    marketOpenTimeInput.value = openTime;
+                    console.log('Market open time set to:', openTime);
+                }
+                if (marketCloseTimeInput && settings.marketCloseTime) {
+                    const closeTime = `${settings.marketCloseTime.hour.toString().padStart(2, '0')}:${settings.marketCloseTime.minute.toString().padStart(2, '0')}`;
+                    marketCloseTimeInput.value = closeTime;
+                    console.log('Market close time set to:', closeTime);
+                }
                 
                 console.log('Settings loaded successfully');
             } catch (error) {
@@ -1638,10 +2055,12 @@
                 const autoUpdateCheckbox = document.getElementById('autoUpdateEnabled');
                 const minimizeToTrayCheckbox = document.getElementById('minimizeToTray');
                 const closeToTrayCheckbox = document.getElementById('closeToTray');
+                const playNotificationCheckbox = document.getElementById('playNotification');
                 
                 if (autoUpdateCheckbox) autoUpdateCheckbox.checked = true;
                 if (minimizeToTrayCheckbox) minimizeToTrayCheckbox.checked = true;
                 if (closeToTrayCheckbox) closeToTrayCheckbox.checked = true;
+                if (playNotificationCheckbox) playNotificationCheckbox.checked = true;
             }
         }
 
@@ -1650,27 +2069,52 @@
                 const autoUpdateCheckbox = document.getElementById('autoUpdateEnabled');
                 const minimizeToTrayCheckbox = document.getElementById('minimizeToTray');
                 const closeToTrayCheckbox = document.getElementById('closeToTray');
+                const playNotificationCheckbox = document.getElementById('playNotification');
+                const volumeSlider = document.getElementById('notificationVolume');
+                const marketOpenTimeInput = document.getElementById('marketOpenTime');
+                const marketCloseTimeInput = document.getElementById('marketCloseTime');
                 
-                if (!autoUpdateCheckbox || !minimizeToTrayCheckbox || !closeToTrayCheckbox) {
-                    console.error('One or more checkboxes not found');
-                    showStatus('Error: Settings checkboxes not found', 'error');
+                if (!autoUpdateCheckbox || !minimizeToTrayCheckbox || !closeToTrayCheckbox || 
+                    !playNotificationCheckbox || !volumeSlider || !marketOpenTimeInput || !marketCloseTimeInput) {
+                    console.error('One or more form elements not found');
+                    showStatus('Error: Settings form elements not found', 'error');
                     return;
                 }
                 
                 const autoUpdateEnabled = autoUpdateCheckbox.checked;
                 const minimizeToTray = minimizeToTrayCheckbox.checked;
                 const closeToTray = closeToTrayCheckbox.checked;
+                const playNotification = playNotificationCheckbox.checked;
+                const notificationVolume = parseFloat(volumeSlider.value);
+                
+                // Parse time inputs
+                const openTimeValue = marketOpenTimeInput.value;
+                const closeTimeValue = marketCloseTimeInput.value;
+                
+                const [openHour, openMinute] = openTimeValue.split(':').map(Number);
+                const [closeHour, closeMinute] = closeTimeValue.split(':').map(Number);
+                
+                const marketOpenTime = { hour: openHour, minute: openMinute };
+                const marketCloseTime = { hour: closeHour, minute: closeMinute };
                 
                 console.log('Saving settings:', {
                     autoUpdate: autoUpdateEnabled,
                     minimizeToTray: minimizeToTray,
-                    closeToTray: closeToTray
+                    closeToTray: closeToTray,
+                    playNotification: playNotification,
+                    notificationVolume: notificationVolume,
+                    marketOpenTime: marketOpenTime,
+                    marketCloseTime: marketCloseTime
                 });
                 
                 const result = await ipcRenderer.invoke('update-settings', { 
                     autoUpdate: autoUpdateEnabled,
                     minimizeToTray: minimizeToTray,
-                    closeToTray: closeToTray
+                    closeToTray: closeToTray,
+                    playNotification: playNotification,
+                    notificationVolume: notificationVolume,
+                    marketOpenTime: marketOpenTime,
+                    marketCloseTime: marketCloseTime
                 });
                 
                 console.log('Settings saved successfully:', result);
@@ -1725,7 +2169,7 @@
         color: #b0b0b0;
         z-index: 1000;
     ">
-        <p>The Egyptian Exchange App v<span id="appVersion">0.6.7</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+        <p>The Egyptian Exchange App v<span id="appVersion">0.6.8</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
     </footer>
 </body>
 </html>

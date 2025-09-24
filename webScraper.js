@@ -151,10 +151,42 @@ class EgyptianExchangeScraper {
     this.isRunning = false;
     this.intervalId = null;
     this.dataCallback = null;
+    this.marketSettings = {
+      marketOpenTime: { hour: 10, minute: 0 },
+      marketCloseTime: { hour: 14, minute: 30 }
+    };
   }
 
-  async fetchStockData() {
+  // Check if market is currently open
+  isMarketOpen() {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = currentHour * 60 + currentMinute;
+    
+    const openTime = this.marketSettings.marketOpenTime.hour * 60 + this.marketSettings.marketOpenTime.minute;
+    const closeTime = this.marketSettings.marketCloseTime.hour * 60 + this.marketSettings.marketCloseTime.minute;
+    
+    return currentTime >= openTime && currentTime < closeTime;
+  }
+
+  // Update market settings from main process
+  updateMarketSettings(settings) {
+    this.marketSettings = {
+      marketOpenTime: settings.marketOpenTime || this.marketSettings.marketOpenTime,
+      marketCloseTime: settings.marketCloseTime || this.marketSettings.marketCloseTime
+    };
+    console.log('📊 Market settings updated:', this.marketSettings);
+  }
+
+  async fetchStockData(forceRealData = false) {
     try {
+      // Check if market is open before scraping (unless forced)
+      if (!forceRealData && !this.isMarketOpen()) {
+        console.log('⏰ Market is closed, skipping data scraping');
+        return this.getMockData();
+      }
+
       // Check if axios is available
       if (!axios || typeof axios.get !== 'function') {
         console.log('⚠️ Axios not available or invalid, using mock data');
@@ -335,8 +367,14 @@ class EgyptianExchangeScraper {
   async fetchAndNotify() {
     try {
       const data = await this.fetchStockData();
-      if (this.dataCallback && data) {
+      // Only update with real data, don't overwrite with mock data during auto-updates
+      if (this.dataCallback && data && data.length > 10) { // Real data has 300+ stocks, mock has 2
         this.dataCallback(data);
+      } else if (this.isMarketOpen()) {
+        // Only send mock data if market is open (shouldn't happen, but as fallback)
+        this.dataCallback(data);
+      } else {
+        console.log('⏰ Market closed - keeping existing real data, not updating with mock data');
       }
     } catch (error) {
       console.error('❌ Error in fetchAndNotify:', error);

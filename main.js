@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -97,7 +97,17 @@ let settings = {
         height: 800,
         x: undefined,
         y: undefined
-    }
+    },
+    marketOpenTime: {
+        hour: 10,
+        minute: 0
+    },
+    marketCloseTime: {
+        hour: 14,
+        minute: 30
+    },
+    playNotification: true,
+    notificationVolume: 0.7
 };
 
 // Settings file path - will be set when app is ready
@@ -347,10 +357,13 @@ async function initializeWebScraper() {
   
   scraper = new EgyptianExchangeScraper();
   
+  // Update scraper with current market settings
+  scraper.updateMarketSettings(settings);
+  
   // Load initial data first, then start auto-updating
   try {
     console.log('📊 Loading initial stock data...');
-    stockData = await scraper.fetchStockData();
+    stockData = await scraper.fetchStockData(true); // Force real data on startup
     console.log(`📊 Initial stock data loaded: ${stockData.length} stocks`);
     
     // Send initial data to renderer immediately
@@ -380,7 +393,7 @@ async function refreshStockData() {
   
   try {
     if (scraper) {
-      const data = await scraper.fetchStockData();
+      const data = await scraper.fetchStockData(true); // Force real data on manual refresh
       stockData = data;
       
       // Send updated data to renderer
@@ -602,8 +615,139 @@ ipcMain.handle('update-settings', (event, newSettings) => {
     checkForUpdatesIfEnabled();
   }
   
+  // If market time settings changed, restart market time checking and update scraper
+  if (newSettings.marketOpenTime !== undefined || newSettings.marketCloseTime !== undefined) {
+    stopMarketTimeChecking();
+    startMarketTimeChecking();
+    
+    // Update scraper with new market settings
+    if (scraper) {
+      scraper.updateMarketSettings(settings);
+    }
+  }
+  
   return settings;
 });
+
+// Handle test notification sound request (now handled directly in renderer)
+ipcMain.handle('test-notification-sound', () => {
+  console.log('Testing notification sound...');
+  playNotificationSound();
+  return { success: true, message: 'Test sound played' };
+});
+
+// Market time checking and notification functionality
+let marketTimeInterval = null;
+let lastMarketState = null; // 'open', 'closed', or null
+
+function checkMarketStatus() {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = currentHour * 60 + currentMinute;
+    
+    const openTime = settings.marketOpenTime.hour * 60 + settings.marketOpenTime.minute;
+    const closeTime = settings.marketCloseTime.hour * 60 + settings.marketCloseTime.minute;
+    
+    let currentMarketState;
+    if (currentTime >= openTime && currentTime < closeTime) {
+        currentMarketState = 'open';
+    } else {
+        currentMarketState = 'closed';
+    }
+    
+    // Only notify if state changed and notifications are enabled
+    if (lastMarketState !== null && lastMarketState !== currentMarketState && settings.playNotification) {
+        const message = currentMarketState === 'open' ? 'Market Open' : 'Market Closed';
+        console.log(`🔔 Market state changed! Sending notification: ${message}`);
+        showNotification(message);
+        playNotificationSound();
+    }
+    
+    lastMarketState = currentMarketState;
+    
+    // Send market status to renderer
+    if (mainWindow) {
+        mainWindow.webContents.send('market-status-updated', {
+            status: currentMarketState,
+            openTime: settings.marketOpenTime,
+            closeTime: settings.marketCloseTime
+        });
+    }
+}
+
+function showNotification(message) {
+    // Show in-app notification
+    if (mainWindow) {
+        mainWindow.webContents.send('show-notification', message);
+    }
+    
+    // Show OS-level notification
+    if (Notification.isSupported()) {
+        const notification = new Notification({
+            title: 'Egyptian Exchange Market',
+            body: message,
+            icon: path.join(__dirname, 'assets', 'icon.png'),
+            sound: false // We handle sound separately
+        });
+        
+        notification.show();
+        
+        // Auto-close after 5 seconds
+        setTimeout(() => {
+            notification.close();
+        }, 5000);
+    }
+}
+
+function playNotificationSound() {
+  try {
+    const soundPath = path.join(__dirname, 'assets', 'Bell Sound Effects.m4a');
+    if (fs.existsSync(soundPath)) {
+      console.log('Playing notification sound:', soundPath);
+      // Use internal app audio - send to renderer process
+      if (mainWindow) {
+        mainWindow.webContents.send('play-audio', {
+          filePath: soundPath,
+          volume: settings.notificationVolume || 0.7
+        });
+      }
+    } else {
+      console.log('Notification sound file not found');
+      // Fallback to beep sound
+      if (mainWindow) {
+        mainWindow.webContents.send('play-beep', {
+          volume: settings.notificationVolume || 0.7
+        });
+      }
+    }
+  } catch (error) {
+    console.log('Error playing notification sound:', error.message);
+    // Fallback to beep sound
+    if (mainWindow) {
+      mainWindow.webContents.send('play-beep', {
+        volume: settings.notificationVolume || 0.7
+      });
+    }
+  }
+}
+
+function startMarketTimeChecking() {
+    // Check immediately
+    checkMarketStatus();
+    
+    // Then check every minute
+    marketTimeInterval = setInterval(checkMarketStatus, 60000);
+    console.log('Market time checking started');
+}
+
+function stopMarketTimeChecking() {
+    if (marketTimeInterval) {
+        clearInterval(marketTimeInterval);
+        marketTimeInterval = null;
+        console.log('Market time checking stopped');
+    }
+}
 
 // Fix GPU issues
 app.commandLine.appendSwitch('--disable-gpu');
@@ -617,6 +761,9 @@ app.whenReady().then(() => {
   
   createWindow();
   createTray();
+  
+  // Start market time checking
+  startMarketTimeChecking();
   
   // Check for updates after a short delay to allow window to load
   setTimeout(() => {
@@ -650,4 +797,5 @@ app.on('before-quit', () => {
   if (scraper) {
     scraper.stopAutoUpdate();
   }
+  stopMarketTimeChecking();
 });
