@@ -776,19 +776,19 @@
             <div class="modal-body">
                 <div class="setting-item">
                     <label>
-                        <input type="checkbox" id="autoUpdateEnabled" checked>
+                        <input type="checkbox" id="autoUpdateEnabled">
                         Enable automatic updates
                     </label>
                 </div>
                 <div class="setting-item">
                     <label>
-                        <input type="checkbox" id="minimizeToTray" checked>
+                        <input type="checkbox" id="minimizeToTray">
                         Minimize to system tray
                     </label>
                 </div>
                 <div class="setting-item">
                     <label>
-                        <input type="checkbox" id="closeToTray" checked>
+                        <input type="checkbox" id="closeToTray">
                         Close to system tray
                     </label>
                 </div>
@@ -808,7 +808,7 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.2</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.6</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
             </div>
         </div>
     </div>
@@ -1608,11 +1608,20 @@
         async function loadSettings() {
             try {
                 const settings = await ipcRenderer.invoke('get-settings');
-                document.getElementById('autoUpdateEnabled').checked = settings.autoUpdate;
-                document.getElementById('minimizeToTray').checked = settings.minimizeToTray !== false; // Default to true
-                document.getElementById('closeToTray').checked = settings.closeToTray !== false; // Default to true
+                console.log('Loading settings:', settings);
+                
+                // Set checkbox states based on loaded settings
+                document.getElementById('autoUpdateEnabled').checked = settings.autoUpdate === true;
+                document.getElementById('minimizeToTray').checked = settings.minimizeToTray === true;
+                document.getElementById('closeToTray').checked = settings.closeToTray === true;
+                
+                console.log('Settings loaded successfully');
             } catch (error) {
                 console.error('Error loading settings:', error);
+                // Set default values if loading fails
+                document.getElementById('autoUpdateEnabled').checked = true;
+                document.getElementById('minimizeToTray').checked = true;
+                document.getElementById('closeToTray').checked = true;
             }
         }
 
@@ -1622,11 +1631,19 @@
                 const minimizeToTray = document.getElementById('minimizeToTray').checked;
                 const closeToTray = document.getElementById('closeToTray').checked;
                 
-                await ipcRenderer.invoke('update-settings', { 
+                console.log('Saving settings:', {
                     autoUpdate: autoUpdateEnabled,
                     minimizeToTray: minimizeToTray,
                     closeToTray: closeToTray
                 });
+                
+                const result = await ipcRenderer.invoke('update-settings', { 
+                    autoUpdate: autoUpdateEnabled,
+                    minimizeToTray: minimizeToTray,
+                    closeToTray: closeToTray
+                });
+                
+                console.log('Settings saved successfully:', result);
                 showStatus('Settings saved successfully', 'success');
                 hideSettingsModal();
             } catch (error) {
@@ -1677,7 +1694,7 @@
         color: #b0b0b0;
         z-index: 1000;
     ">
-        <p>The Egyptian Exchange App v<span id="appVersion">0.6.2</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+        <p>The Egyptian Exchange App v<span id="appVersion">0.6.6</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
     </footer>
 </body>
 </html>

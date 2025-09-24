@@ -1,11 +1,11 @@
 {
   "autoUpdate": true,
   "minimizeToTray": true,
-  "closeToTray": true,
+  "closeToTray": false,
   "windowBounds": {
     "width": 1388,
     "height": 848,
-    "x": 96,
-    "y": 44
+    "x": 10,
+    "y": 81
   }
 }
