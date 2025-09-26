@@ -4,6 +4,9 @@ const fs = require('fs');
 const https = require('https');
 const { URL } = require('url');
 
+// Single instance lock
+const gotTheLock = app.requestSingleInstanceLock();
+
 // Load modules with fallback support
 let axios;
 let cheerio;
@@ -274,6 +277,382 @@ function createWindow() {
   });
 }
 
+<<<<<<< Updated upstream
+=======
+// Create widget window
+function createWidgetWindow() {
+  console.log('🔧 Creating widget window...');
+  
+  // Don't create if main window is destroyed
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    console.log('🔧 Cannot create widget - main window is destroyed');
+    return;
+  }
+  
+  if (widgetWindow) {
+    console.log('🔧 Destroying existing widget window');
+    widgetWindow.destroy();
+    widgetWindow = null;
+  }
+  
+  const windowOptions = {
+    width: 400,
+    height: 300,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
+      hardwareAcceleration: false
+    },
+    icon: path.join(__dirname, 'assets/icon.png'),
+    title: 'Egyptian Exchange Widget',
+    autoHideMenuBar: true,
+    center: true,
+    show: false,
+    frame: false,
+    transparent: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: true,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
+    x: 100,
+    y: 100,
+    backgroundColor: '#1a1a2e'
+  };
+  
+  console.log('🔧 Window options:', windowOptions);
+  
+  try {
+    widgetWindow = new BrowserWindow(windowOptions);
+    console.log('✅ Widget window created successfully');
+  } catch (error) {
+    console.error('❌ Error creating widget window:', error);
+    return;
+  }
+  
+  // Create clean widget HTML content
+  const widgetHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Egyptian Exchange Widget</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            body {
+                background: #1a1a2e;
+                color: white;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 14px;
+                height: 100vh;
+                width: 100vw;
+                margin: 0;
+                padding: 0;
+                cursor: move;
+                -webkit-app-region: drag;
+                overflow: hidden;
+                border-radius: 8px;
+                border: 1px solid rgba(74, 144, 226, 0.2);
+                user-select: none;
+                position: relative;
+                box-sizing: border-box;
+            }
+            
+            /* Make the entire body draggable */
+            body * {
+                -webkit-app-region: drag;
+                        }
+            
+            .widget-header {
+                background: linear-gradient(135deg, #4a90e2, #357abd);
+                padding: 8px 12px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                -webkit-app-region: drag;
+                border-radius: 6px 6px 0 0;
+                box-sizing: border-box;
+            }
+            
+            .widget-title {
+                font-weight: 600;
+                font-size: 14px;
+                color: white;
+            }
+            
+                        .widget-controls {
+                            display: flex;
+                gap: 8px;
+                            -webkit-app-region: no-drag;
+                        }
+            
+            .btn {
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                -webkit-app-region: no-drag;
+            }
+            
+            .btn:hover {
+                background: rgba(255, 255, 255, 0.3);
+                transform: scale(1.05);
+            }
+            
+            .widget-content {
+                padding: 10px;
+                height: calc(100vh - 50px);
+                overflow-y: auto;
+                -webkit-app-region: no-drag;
+                cursor: default;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+            }
+            
+            .loading {
+                text-align: center;
+                color: #9ca3af;
+                padding: 20px;
+                font-size: 13px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+            }
+            
+            .empty {
+                text-align: center;
+                color: #9ca3af;
+                padding: 30px 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+            }
+            
+            .empty-icon {
+                font-size: 32px;
+                margin-bottom: 10px;
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+                margin: 0 auto;
+                max-width: 100%;
+            }
+            
+            #content {
+                text-align: center;
+            }
+            
+            #content > * {
+                margin: 0 auto;
+            }
+            
+            th {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 8px;
+                text-align: center;
+                color: #9ca3af;
+                font-weight: 500;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            td {
+                padding: 10px 8px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                color: white;
+                text-align: center;
+            }
+            
+            tr:hover {
+                background: rgba(255, 255, 255, 0.03);
+            }
+            
+            .price-positive {
+                color: #10b981;
+            }
+            
+            .price-negative {
+                color: #ef4444;
+            }
+            
+            /* Custom scrollbar */
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            ::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 3px;
+            }
+            
+            ::-webkit-scrollbar-thumb {
+                background: linear-gradient(45deg, #4a90e2, #357abd);
+                border-radius: 3px;
+            }
+            
+            ::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(45deg, #5ba0f2, #4a8acd);
+            }
+        </style>
+    </head>
+    <body>
+            <div class="widget-header">
+                <div class="widget-title">📈 Egyptian Exchange</div>
+                        <div class="widget-controls">
+                            <button class="btn" onclick="refresh()" title="Refresh">🔄</button>
+                            <button class="btn" onclick="closeWidget()" title="Close">✕</button>
+                        </div>
+            </div>
+            <div class="widget-content" id="content">
+            <div class="loading">
+                <div>🔄 Loading stock data...</div>
+            </div>
+        </div>
+        
+        <script>
+            const { ipcRenderer } = require('electron');
+            
+            function refresh() {
+                console.log('🔄 Refreshing widget watchlist data...');
+                        const content = document.getElementById('content');
+                
+                // Keep old data visible while refreshing
+                const currentContent = content.innerHTML;
+                
+                // Only show loading if there's no current data
+                if (!currentContent || currentContent.includes('No data available') || currentContent.includes('Error loading')) {
+                    content.innerHTML = '<div class="loading"><div>🔄 Loading...</div></div>';
+                }
+                
+                // Request watchlist data from main window instead of live data
+                ipcRenderer.invoke('request-watchlist-data').then(result => {
+                    if (result && result.success) {
+                        console.log('✅ Widget watchlist data refreshed');
+                        // The data will be sent via IPC event, no need to update content here
+                    } else {
+                        // Only show no data message if we don't have any current data
+                        if (!currentContent || currentContent.includes('No data available') || currentContent.includes('Error loading')) {
+                            content.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div>No watchlist data available</div></div>';
+                        }
+                    }
+                }).catch(error => {
+                    console.error('❌ Error refreshing watchlist:', error);
+                    // Only show error if we don't have any current data
+                    if (!currentContent || currentContent.includes('No data available') || currentContent.includes('Error loading')) {
+                        content.innerHTML = '<div class="empty"><div class="empty-icon">❌</div><div>Error loading watchlist data</div></div>';
+                    }
+                });
+            }
+            
+            function closeWidget() {
+                console.log('🔧 Close button clicked - closing widget...');
+                    ipcRenderer.invoke('close-widget-window').then(result => {
+                    console.log('🔧 Close result:', result);
+                        if (result.success) {
+                        console.log('🔧 Widget close successful');
+                            window.close();
+                    } else {
+                        console.log('🔧 Widget close failed:', result.error);
+                        }
+                    }).catch(error => {
+                    console.error('❌ Error closing widget:', error);
+                        window.close();
+                    });
+            }
+            
+            // Load data on startup
+            window.addEventListener('load', () => {
+                setTimeout(refresh, 100);
+            });
+            
+            // Listen for data updates
+            ipcRenderer.on('update-widget-table', (event, tableHTML) => {
+                const content = document.getElementById('content');
+                if (tableHTML) {
+                    content.innerHTML = tableHTML;
+                } else {
+                    content.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div>No data available</div></div>';
+                }
+            });
+            
+            // Auto-refresh every 30 seconds
+            setInterval(refresh, 30000);
+        </script>
+    </body>
+    </html>
+  `;
+  
+  try {
+    widgetWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(widgetHTML)}`);
+    console.log('✅ Widget HTML loaded');
+  } catch (error) {
+    console.error('❌ Error loading widget HTML:', error);
+  }
+  
+  // Apply opacity from settings
+  if (settings.widgetWindow && settings.widgetWindow.opacity) {
+    widgetWindow.setOpacity(settings.widgetWindow.opacity);
+  }
+  
+  // Handle window events
+  widgetWindow.on('closed', () => {
+    console.log('🔧 Widget window closed');
+    widgetWindow = null;
+  });
+  
+  widgetWindow.once('ready-to-show', () => {
+    console.log('✅ Widget window ready');
+  widgetWindow.show();
+  widgetWindow.focus();
+  
+    // Send data after widget is ready
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.executeJavaScript(`
+        if (typeof sendWatchlistToWidget === 'function') {
+          sendWatchlistToWidget();
+        }
+      `).catch(error => {
+          console.error('Error sending initial data:', error);
+        });
+      }
+    }, 500);
+  });
+  
+  console.log('✅ Widget window created successfully');
+}
+
+// Update tray menu
+function updateTrayMenu() {
+  if (tray) {
+    createTray(); // Recreate tray with updated menu
+  }
+}
+
+>>>>>>> Stashed changes
 // Create system tray
 function createTray() {
   if (tray) {
@@ -316,6 +695,37 @@ function createTray() {
     },
     { type: 'separator' },
     {
+<<<<<<< Updated upstream
+=======
+      label: 'Toggle Widget',
+      click: () => {
+        if (widgetWindow) {
+          if (widgetWindow.isVisible()) {
+            widgetWindow.hide();
+            settings.widgetWindow.enabled = false;
+          } else {
+            widgetWindow.show();
+            widgetWindow.focus();
+            settings.widgetWindow.enabled = true;
+          }
+        } else {
+          createWidgetWindow();
+          settings.widgetWindow.enabled = true;
+          setTimeout(() => {
+            if (widgetWindow) {
+              widgetWindow.show();
+              widgetWindow.focus();
+            }
+          }, 500);
+        }
+        // Update settings checkbox in main window
+        if (mainWindow) {
+          mainWindow.webContents.send('update-widget-checkbox', settings.widgetWindow.enabled);
+        }
+      }
+    },
+    {
+>>>>>>> Stashed changes
       label: 'Settings',
       click: () => {
         if (mainWindow) {
@@ -597,6 +1007,361 @@ ipcMain.handle('open-download-page', () => {
   }
 });
 
+<<<<<<< Updated upstream
+=======
+// Widget window IPC handlers
+ipcMain.handle('toggle-widget-window', () => {
+  try {
+    if (widgetWindow) {
+      if (widgetWindow.isVisible()) {
+        widgetWindow.hide();
+        console.log('Widget window hidden');
+        return { success: true, visible: false };
+      } else {
+        widgetWindow.show();
+        widgetWindow.focus();
+        console.log('Widget window shown');
+        return { success: true, visible: true };
+      }
+    } else {
+      createWidgetWindow();
+      // Force show the widget after creation
+      setTimeout(() => {
+        if (widgetWindow) {
+          widgetWindow.show();
+          widgetWindow.focus();
+          console.log('Widget window created and shown');
+        }
+      }, 500);
+      return { success: true, visible: true };
+    }
+  } catch (error) {
+    console.error('Error toggling widget window:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('hide-widget-window', () => {
+  try {
+    console.log('🔧 Hide widget window requested');
+    if (widgetWindow) {
+      widgetWindow.hide();
+      console.log('Widget window hidden');
+      return { success: true, visible: false };
+    }
+    return { success: true, visible: false };
+  } catch (error) {
+    console.error('❌ Error hiding widget window:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('close-widget-window', () => {
+  try {
+    console.log('🔧 Close widget window requested');
+    if (widgetWindow) {
+      widgetWindow.hide();
+      console.log('Widget window hidden');
+    }
+    
+    // Update settings to disabled
+    if (settings.widgetWindow) {
+      settings.widgetWindow.enabled = false;
+      saveSettings(settings);
+      console.log('🔧 Widget setting disabled and saved');
+    }
+    
+    // Update checkbox in main window
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-widget-checkbox', false);
+      console.log('🔧 Widget checkbox updated in main window');
+    }
+    
+    return { success: true, visible: false };
+  } catch (error) {
+    console.error('❌ Error hiding widget window:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('create-widget-window', () => {
+  try {
+    createWidgetWindow();
+    return { success: true };
+  } catch (error) {
+    console.error('Error creating widget window:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-watchlist-data', async () => {
+  try {
+    console.log('🔧 Getting watchlist data...');
+    
+    // Return empty array for now - we'll use a different approach
+    console.log('📊 Returning empty array - will use IPC events instead');
+    return [];
+  } catch (error) {
+    console.error('❌ Error getting watchlist data:', error);
+    return [];
+  }
+});
+
+// New IPC handler for main window to send watchlist data to widget
+ipcMain.handle('send-watchlist-to-widget', (event, watchlistData) => {
+  try {
+    console.log('🔧 Received watchlist data from main window:', watchlistData);
+    console.log('🔧 Widget window exists:', !!widgetWindow);
+    console.log('🔧 Widget window destroyed:', widgetWindow ? widgetWindow.isDestroyed() : 'N/A');
+    
+    if (widgetWindow && !widgetWindow.isDestroyed()) {
+      console.log('🔧 Sending data to widget...');
+      widgetWindow.webContents.send('watchlist-updated', watchlistData);
+      return { success: true };
+    } else {
+      console.log('⚠️ Widget window not available or destroyed');
+      return { success: false, error: 'Widget window not available' };
+    }
+  } catch (error) {
+    console.error('❌ Error sending watchlist to widget:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// IPC handler for widget to request watchlist data
+ipcMain.handle('request-watchlist-data', async () => {
+  try {
+    console.log('🔧 Widget requesting watchlist data...');
+    
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      // Get watchlist table HTML from main window
+      const tableHTML = await mainWindow.webContents.executeJavaScript(`
+        const table = document.querySelector('#watchlistTable');
+        if (table) {
+          return table.outerHTML;
+        }
+        return null;
+      `);
+      
+      if (tableHTML && widgetWindow && !widgetWindow.isDestroyed()) {
+        // Process the table HTML to remove action column
+        const processedHTML = await mainWindow.webContents.executeJavaScript(`
+          (function() {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = \`${tableHTML.replace(/`/g, '\\`')}\`;
+            
+            const tables = tempDiv.querySelectorAll('table');
+            tables.forEach(table => {
+              const headerRow = table.querySelector('thead tr');
+              if (headerRow) {
+                const headerCells = Array.from(headerRow.querySelectorAll('th'));
+                headerCells.forEach((th, index) => {
+                  const text = th.textContent.trim().toLowerCase();
+                  if (text === 'action' || text.includes('action')) {
+                    th.remove();
+                    // Remove corresponding data cells
+                    const dataRows = table.querySelectorAll('tbody tr');
+                    dataRows.forEach(row => {
+                      const cells = Array.from(row.querySelectorAll('td'));
+                      if (cells[index]) {
+                        cells[index].remove();
+                      }
+                    });
+                  }
+                });
+              }
+            });
+            
+            return tempDiv.innerHTML;
+          })();
+        `);
+        
+        // Send processed table HTML to widget
+        widgetWindow.webContents.send('update-widget-table', processedHTML);
+        return { success: true };
+      }
+    }
+    
+    return { success: false, error: 'No watchlist data available' };
+  } catch (error) {
+    console.error('❌ Error getting watchlist data:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// New IPC handler for main window to send table HTML to widget (with action column removed)
+ipcMain.handle('send-table-to-widget', async (event, tableHTML) => {
+  try {
+    console.log('🔧 Received table HTML from main window');
+    console.log('🔧 Widget window exists:', !!widgetWindow);
+    console.log('🔧 Widget window destroyed:', widgetWindow ? widgetWindow.isDestroyed() : 'N/A');
+    
+    if (widgetWindow && !widgetWindow.isDestroyed()) {
+      console.log('🔧 Processing table HTML to remove action column...');
+      
+      // Remove action column from table HTML using main window's JavaScript execution
+      let processedHTML = tableHTML;
+      try {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          // Use main window to execute JavaScript that removes action column
+          processedHTML = await mainWindow.webContents.executeJavaScript(`
+            (function() {
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = \`${tableHTML.replace(/`/g, '\\`')}\`;
+              
+              const tables = tempDiv.querySelectorAll('table');
+              tables.forEach(table => {
+                const headerRow = table.querySelector('thead tr');
+                if (headerRow) {
+                  const headerCells = Array.from(headerRow.querySelectorAll('th'));
+                  headerCells.forEach((th, index) => {
+                    const text = th.textContent.trim().toLowerCase();
+                    if (text === 'action' || text.includes('action')) {
+                      th.remove();
+                      // Remove corresponding data cells
+                      const dataRows = table.querySelectorAll('tbody tr');
+                      dataRows.forEach(row => {
+                        const cells = Array.from(row.querySelectorAll('td'));
+                        if (cells[index]) {
+                          cells[index].remove();
+                        }
+                      });
+                    }
+                  });
+                }
+              });
+              
+              return tempDiv.innerHTML;
+            })();
+          `);
+          console.log('✅ Action column removed from table HTML');
+        } else {
+          console.log('⚠️ Main window not available, sending original HTML');
+        }
+      } catch (parseError) {
+        console.log('⚠️ Could not process table HTML, sending as-is:', parseError.message);
+        // If processing fails, send the original HTML
+        processedHTML = tableHTML;
+      }
+      
+      console.log('🔧 Sending processed table HTML to widget...');
+      widgetWindow.webContents.send('update-widget-table', processedHTML);
+      return { success: true };
+    } else {
+      console.log('⚠️ Widget window not available or destroyed');
+      return { success: false, error: 'Widget window not available' };
+    }
+  } catch (error) {
+    console.error('❌ Error sending table to widget:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Test IPC handler
+ipcMain.handle('test-widget-communication', () => {
+  try {
+    console.log('🧪 Testing widget communication...');
+    if (widgetWindow && !widgetWindow.isDestroyed()) {
+      widgetWindow.webContents.send('test-message', { message: 'Hello from main process!', timestamp: Date.now() });
+      console.log('🧪 Test message sent to widget');
+      return { success: true };
+    }
+    return { success: false, error: 'Widget window not available' };
+  } catch (error) {
+    console.error('❌ Error testing widget communication:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Create test widget handler
+ipcMain.handle('create-test-widget', () => {
+  try {
+    console.log('🔧 Creating test widget...');
+    createWidgetWindow();
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error creating test widget:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Refresh widget table handler - simplified approach
+ipcMain.handle('refresh-widget-table', async () => {
+  try {
+    console.log('🔧 Refreshing widget table...');
+    
+    // Always create a simple table from stock data (no action column)
+    console.log('🔧 Creating widget table from stock data (no action column)');
+    if (stockData && stockData.length > 0) {
+      let fallbackHTML = '<table style="width: 100%; border-collapse: collapse; font-size: 12px; color: white; direction: rtl;">' +
+        '<thead>' +
+          '<tr style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">' +
+            '<th style="padding: 8px; text-align: right; color: #9ca3af; font-weight: 500;">اسم السهم</th>' +
+            '<th style="padding: 8px; text-align: center; color: #9ca3af; font-weight: 500;">اخر سعر</th>' +
+            '<th style="padding: 8px; text-align: center; color: #9ca3af; font-weight: 500;">التغير %</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>';
+      
+      stockData.slice(0, 10).forEach(stock => {
+        const symbol = stock['الإسم_المختصر'] || stock['Short Name'] || 'Unknown';
+        const price = stock['أخر_سعر'] || stock['Last Price'] || 'N/A';
+        const change = stock['%التغيير'] || stock['Changes %'] || 0;
+        
+        let formattedPrice = price;
+        if (price !== 'N/A' && !isNaN(parseFloat(price))) {
+          formattedPrice = 'EGP ' + parseFloat(price).toFixed(2);
+        }
+        
+        let changeText = change + '%';
+        let changeColor = '#9ca3af';
+        if (change > 0) {
+          changeText = '+' + change + '%';
+          changeColor = '#10b981';
+        } else if (change < 0) {
+          changeColor = '#ef4444';
+        }
+        
+        fallbackHTML += '<tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.2s;" onmouseover="this.style.background=\'rgba(255, 255, 255, 0.03)\'" onmouseout="this.style.background=\'transparent\'">' +
+          '<td style="padding: 8px; text-align: right; color: #ffffff; font-weight: 600;">' + symbol + '</td>' +
+          '<td style="padding: 8px; text-align: center; color: #ffffff; font-weight: 600;">' + formattedPrice + '</td>' +
+          '<td style="padding: 8px; text-align: center; color: ' + changeColor + '; font-weight: 500;">' + changeText + '</td>' +
+        '</tr>';
+      });
+      
+      fallbackHTML += '</tbody></table>';
+      
+      console.log('📊 Created widget table with', stockData.length, 'stocks (no action column)');
+      return fallbackHTML;
+    }
+    return null;
+  } catch (error) {
+    console.error('❌ Error refreshing widget table:', error);
+    return null;
+  }
+});
+
+ipcMain.handle('show-widget-window', () => {
+  try {
+    console.log('🔧 Show widget window requested');
+    if (widgetWindow) {
+      console.log('🔧 Showing existing widget window');
+      widgetWindow.show();
+      widgetWindow.focus();
+      return { success: true };
+    } else {
+      console.log('🔧 Creating new widget window');
+      createWidgetWindow();
+      return { success: true };
+    }
+  } catch (error) {
+    console.error('❌ Error showing widget window:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+
+>>>>>>> Stashed changes
 // Install update handler removed - users download manually from GitHub
 
     ipcMain.handle('get-settings', () => {
@@ -769,6 +1534,24 @@ function stopMarketTimeChecking() {
 app.commandLine.appendSwitch('--disable-gpu');
 app.commandLine.appendSwitch('--disable-gpu-sandbox');
 app.commandLine.appendSwitch('--disable-software-rasterizer');
+
+// Single instance check
+if (!gotTheLock) {
+  console.log('🔒 Another instance is already running, quitting...');
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // Someone tried to run a second instance, we should focus our window instead
+    console.log('🔒 Second instance detected, focusing existing window...');
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
 
 app.whenReady().then(() => {
   // Initialize settings path after app is ready

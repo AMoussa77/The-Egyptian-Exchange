@@ -963,6 +963,85 @@
                     <input type="number" id="updateInterval" min="5" max="300" step="5" value="30" style="width: 80px; margin-right: 10px;">
                     <span id="intervalDisplay">30 seconds</span>
                 </div>
+<<<<<<< Updated upstream
+=======
+                <div class="setting-item" style="flex-direction: column; align-items: flex-start; margin: 20px 0;">
+                    <label style="margin-bottom: 10px; font-weight: 600; color: #ffffff;">Days Off (Market Closed):</label>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%;">
+                        <div class="setting-item" style="margin: 5px 0;">
+                            <label>
+                                <input type="checkbox" id="sundayOff">
+                                Sunday
+                            </label>
+                        </div>
+                        <div class="setting-item" style="margin: 5px 0;">
+                            <label>
+                                <input type="checkbox" id="mondayOff">
+                                Monday
+                            </label>
+                        </div>
+                        <div class="setting-item" style="margin: 5px 0;">
+                            <label>
+                                <input type="checkbox" id="tuesdayOff">
+                                Tuesday
+                            </label>
+                        </div>
+                        <div class="setting-item" style="margin: 5px 0;">
+                            <label>
+                                <input type="checkbox" id="wednesdayOff">
+                                Wednesday
+                            </label>
+                        </div>
+                        <div class="setting-item" style="margin: 5px 0;">
+                            <label>
+                                <input type="checkbox" id="thursdayOff">
+                                Thursday
+                            </label>
+                        </div>
+                        <div class="setting-item" style="margin: 5px 0;">
+                            <label>
+                                <input type="checkbox" id="fridayOff">
+                                Friday
+                            </label>
+                        </div>
+                        <div class="setting-item" style="margin: 5px 0;">
+                            <label>
+                                <input type="checkbox" id="saturdayOff">
+                                Saturday
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="setting-item" style="flex-direction: column; align-items: flex-start; margin: 20px 0;">
+                    <label style="margin-bottom: 10px; font-weight: 600; color: #ffffff;">Widget Window:</label>
+                    <div class="setting-item" style="margin: 5px 0;">
+                        <label>
+                            <input type="checkbox" id="widgetEnabled">
+                            Enable Widget Window
+                        </label>
+                    </div>
+                    <div class="setting-item" style="margin: 5px 0;">
+                        <label>
+                            <input type="checkbox" id="widgetAlwaysOnTop">
+                            Always on Top
+                        </label>
+                    </div>
+                    <div class="setting-item" style="margin: 5px 0;">
+                        <label>
+                            <input type="checkbox" id="widgetTransparent">
+                            Transparent Background
+                        </label>
+                    </div>
+                    <div class="setting-item" style="margin: 5px 0;">
+                        <label for="widgetOpacity">Opacity:</label>
+                        <input type="range" id="widgetOpacity" min="0.3" max="1" step="0.1" value="0.9" style="width: 100px; margin: 0 10px;">
+                        <span id="widgetOpacityDisplay">90%</span>
+                    </div>
+                    <div class="setting-item" style="margin: 10px 0;">
+                        <button class="btn btn-small" onclick="toggleWidgetWindow()" id="toggleWidgetBtn">📊 Toggle Widget</button>
+                    </div>
+                </div>
+>>>>>>> Stashed changes
                 <div class="setting-item">
                     <button class="btn" onclick="checkForUpdates()" id="checkUpdateBtn">🔍 Check for Updates</button>
                 </div>
@@ -979,7 +1058,7 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.6.9</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.7.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
             </div>
         </div>
     </div>
@@ -1884,6 +1963,103 @@
             console.log('Market status updated:', data);
             updateMarketStatusIndicator(data);
         });
+<<<<<<< Updated upstream
+=======
+        
+        // Listen for widget checkbox updates from tray
+        ipcRenderer.on('update-widget-checkbox', (event, enabled) => {
+            const widgetEnabledCheckbox = document.getElementById('widgetEnabled');
+            if (widgetEnabledCheckbox) {
+                widgetEnabledCheckbox.checked = enabled;
+            }
+        });
+        
+        // Function to send watchlist data to widget
+        function sendWatchlistToWidget() {
+            try {
+                // Get the entire table HTML
+                const table = document.querySelector('#watchlistTable');
+                const tableBody = document.querySelector('#watchlistTableBody');
+
+                console.log('Table found:', !!table);
+                console.log('Table display style:', table ? table.style.display : 'N/A');
+                console.log('TableBody found:', !!tableBody);
+
+                if (tableBody) {
+                    const rows = tableBody.querySelectorAll('tr');
+                    console.log('Table rows count:', rows.length);
+
+                    const dataRows = Array.from(rows).filter(row => {
+                        const cells = row.querySelectorAll('td');
+                        return cells.length > 0 && cells[0].textContent.trim() !== '';
+                    });
+                    console.log('Data rows count:', dataRows.length);
+                }
+
+                if (!table || !tableBody) {
+                    console.log('No watchlist table or body found');
+                    showStatus('No watchlist table found', 'error');
+                    return;
+                }
+
+                // Make sure the table is visible before copying
+                const originalDisplay = table.style.display;
+                table.style.display = 'table';
+
+                try {
+                    // Clone the table and get its HTML
+                    const clonedTable = table.cloneNode(true);
+                    const tableHTML = clonedTable.outerHTML;
+
+                    console.log('Sending table HTML to widget, length:', tableHTML.length);
+
+                    // Restore original display style
+                    table.style.display = originalDisplay;
+
+                    ipcRenderer.invoke('send-table-to-widget', tableHTML);
+                } catch (error) {
+                    // Restore original display style
+                    table.style.display = originalDisplay;
+                    throw error;
+                }
+            } catch (error) {
+                console.error('Error sending table to widget:', error);
+                showStatus('Error sending table: ' + error.message, 'error');
+            }
+        }
+        
+        // Function to test widget communication
+        async function testWidgetCommunication() {
+            try {
+                console.log('Testing widget communication...');
+                const result = await ipcRenderer.invoke('test-widget-communication');
+                if (result.success) {
+                    showStatus('Test message sent to widget!', 'success');
+                } else {
+                    showStatus('Test failed: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error testing widget communication:', error);
+                showStatus('Test error: ' + error.message, 'error');
+            }
+        }
+        
+        // Function to create test widget
+        async function createTestWidget() {
+            try {
+                console.log('Creating test widget...');
+                const result = await ipcRenderer.invoke('create-test-widget');
+                if (result.success) {
+                    showStatus('Test widget created!', 'success');
+                } else {
+                    showStatus('Test widget failed: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error creating test widget:', error);
+                showStatus('Test widget error: ' + error.message, 'error');
+            }
+        }
+>>>>>>> Stashed changes
 
         // Update market status indicator in header
         function updateMarketStatusIndicator(data) {
@@ -2375,7 +2551,11 @@
         color: #b0b0b0;
         z-index: 1000;
     ">
+<<<<<<< Updated upstream
         <p>The Egyptian Exchange App v<span id="appVersion">0.6.9</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+=======
+        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.7.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+>>>>>>> Stashed changes
     </footer>
 </body>
 </html>
