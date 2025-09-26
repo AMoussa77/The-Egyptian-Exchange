@@ -4,6 +4,26 @@ const fs = require('fs');
 const https = require('https');
 const { URL } = require('url');
 
+// Load environment variables from .env file if it exists
+try {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const [key, ...valueParts] = line.split('=');
+      if (key && valueParts.length > 0) {
+        const value = valueParts.join('=').trim();
+        if (!process.env[key.trim()]) {
+          process.env[key.trim()] = value;
+        }
+      }
+    });
+    console.log('✅ Loaded environment variables from .env file');
+  }
+} catch (error) {
+  console.log('⚠️ Could not load .env file:', error.message);
+}
+
 // Single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -124,7 +144,7 @@ let settings = {
     },
     widgetWindow: {
         enabled: false,
-        alwaysOnTop: true,
+        alwaysOnTop: false,
         transparent: true,
         opacity: 0.9
     }
@@ -139,8 +159,17 @@ function loadSettings() {
     if (settingsPath && fs.existsSync(settingsPath)) {
       const data = fs.readFileSync(settingsPath, 'utf8');
       const loadedSettings = JSON.parse(data);
+      console.log('🔧 Loaded settings from file:', JSON.stringify(loadedSettings, null, 2));
+      
       // Merge with defaults to ensure all properties exist
       settings = { ...settings, ...loadedSettings };
+      
+      // Ensure widgetWindow settings are properly merged
+      if (loadedSettings.widgetWindow) {
+        settings.widgetWindow = { ...settings.widgetWindow, ...loadedSettings.widgetWindow };
+      }
+      
+      console.log('🔧 Final merged settings:', JSON.stringify(settings, null, 2));
       console.log('Settings loaded from file');
     }
   } catch (error) {
@@ -158,6 +187,7 @@ function saveSettings() {
         fs.mkdirSync(settingsDir, { recursive: true });
       }
       
+      console.log('🔧 Saving settings to file:', JSON.stringify(settings, null, 2));
       fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
       console.log('Settings saved to file');
     }
@@ -170,6 +200,14 @@ function saveSettings() {
 const GITHUB_REPO = 'AMoussa77/The-Egyptian-Exchange';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 const DOWNLOAD_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
+
+// GitHub token for authenticated requests (higher rate limits)
+// You can set this as an environment variable: GITHUB_TOKEN=your_token_here
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || null;
+
+// Simple cache to avoid too many requests
+let lastUpdateCheck = 0;
+const UPDATE_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
 // Function to compare semantic versions
 function compareVersions(version1, version2) {
@@ -191,12 +229,21 @@ function compareVersions(version1, version2) {
 console.log('🚀 Simple update checker enabled');
 console.log('📋 Current version:', app.getVersion());
 console.log('🔗 GitHub repo:', GITHUB_REPO);
+if (GITHUB_TOKEN) {
+  console.log('🔐 GitHub token: Available (authenticated requests enabled)');
+} else {
+  console.log('⚠️ GitHub token: Not found (using unauthenticated requests - lower rate limit)');
+  console.log('💡 Run "node setup-github-token.js" for setup instructions');
+}
 
 // Check for updates on app start if auto-update is enabled
 setTimeout(() => {
   if (settings.autoUpdate) {
     console.log('🔍 Checking for updates on startup...');
-    checkForUpdates();
+    checkForUpdates().catch(error => {
+      console.log('⚠️ Startup update check failed:', error.message);
+      // Don't show error to user on startup, just log it
+    });
   }
 }, 5000); // Check after 5 seconds to let the app fully load
 
@@ -626,9 +673,24 @@ function createWidgetWindow() {
     console.error('❌ Error loading widget HTML:', error);
   }
   
-  // Apply opacity from settings
-  if (settings.widgetWindow && settings.widgetWindow.opacity) {
-    widgetWindow.setOpacity(settings.widgetWindow.opacity);
+  // Apply settings to the widget window
+  if (settings.widgetWindow) {
+    if (settings.widgetWindow.opacity) {
+      widgetWindow.setOpacity(settings.widgetWindow.opacity);
+    }
+    if (settings.widgetWindow.alwaysOnTop !== undefined) {
+      widgetWindow.setAlwaysOnTop(settings.widgetWindow.alwaysOnTop);
+    }
+    if (settings.widgetWindow.transparent) {
+      widgetWindow.setBackgroundColor('#00000000');
+    } else {
+      widgetWindow.setBackgroundColor('#1a1a2e');
+    }
+    console.log('🔧 Widget created with settings:', {
+      alwaysOnTop: settings.widgetWindow.alwaysOnTop,
+      opacity: settings.widgetWindow.opacity,
+      transparent: settings.widgetWindow.transparent
+    });
   }
   
   // Handle window events
@@ -951,24 +1013,62 @@ function checkForUpdatesIfEnabled() {
 }
 
 // Simple function to check for updates via GitHub API
-async function checkForUpdates() {
+async function checkForUpdates(forceCheck = false) {
+  const now = Date.now();
+  
+  // Check cache unless forced
+  if (!forceCheck && (now - lastUpdateCheck) < UPDATE_CHECK_INTERVAL) {
+    console.log('⏭️ Skipping update check - too soon since last check');
+    return { updateInfo: null, message: 'Update check skipped - too soon since last check' };
+  }
+  
   console.log('🔍 Checking for updates...');
+  lastUpdateCheck = now;
   
   return new Promise((resolve, reject) => {
     const url = new URL(GITHUB_API_URL);
+    // Prepare headers with optional authentication
+    const headers = {
+      'User-Agent': 'Egyptian-Exchange-Stocks-App/1.0',
+      'Accept': 'application/vnd.github.v3+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+    
+    // Add authentication header if token is available
+    if (GITHUB_TOKEN) {
+      headers['Authorization'] = `token ${GITHUB_TOKEN}`;
+      console.log('🔐 Using GitHub token for authenticated request');
+    } else {
+      console.log('⚠️ No GitHub token found - using unauthenticated request (lower rate limit)');
+    }
+    
     const options = {
       hostname: url.hostname,
       port: url.port || 443,
       path: url.pathname,
       method: 'GET',
-      headers: {
-        'User-Agent': 'Egyptian-Exchange-Stocks-App',
-        'Accept': 'application/vnd.github.v3+json'
-      }
+      headers: headers
     };
     
     const req = https.request(options, (res) => {
       let data = '';
+      
+      // Check for HTTP error status codes
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        console.error(`❌ HTTP error ${res.statusCode}: ${res.statusMessage}`);
+        
+        // Handle specific error cases
+        if (res.statusCode === 401) {
+          reject(new Error('GitHub authentication failed. Please check your token.'));
+        } else if (res.statusCode === 403) {
+          reject(new Error('GitHub API access denied. Rate limit exceeded or token invalid.'));
+        } else if (res.statusCode === 404) {
+          reject(new Error('Repository or release not found.'));
+        } else {
+          reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
+        }
+        return;
+      }
       
       res.on('data', (chunk) => {
         data += chunk;
@@ -976,8 +1076,36 @@ async function checkForUpdates() {
       
       res.on('end', () => {
         try {
+          // Check for rate limiting or other API errors
+          if (res.statusCode === 403) {
+            const errorData = JSON.parse(data);
+            if (errorData.message && errorData.message.includes('rate limit')) {
+              console.log('⚠️ GitHub API rate limit exceeded');
+              if (mainWindow) {
+                mainWindow.webContents.send('update-error', 'Update check temporarily unavailable due to rate limiting. Please try again later.');
+              }
+              resolve({ updateInfo: null, message: 'Rate limit exceeded. Please try again later.' });
+              return;
+            }
+          }
+          
           const release = JSON.parse(data);
           const currentVersion = app.getVersion();
+          
+          // Validate the release object and tag_name
+          if (!release || typeof release !== 'object') {
+            throw new Error('Invalid release data received from GitHub API');
+          }
+          
+          if (!release.tag_name || typeof release.tag_name !== 'string') {
+            console.log('⚠️ No valid tag_name found in release data');
+            if (mainWindow) {
+              mainWindow.webContents.send('update-error', 'No release information available');
+            }
+            resolve({ updateInfo: null, message: 'No release information available' });
+            return;
+          }
+          
           const latestVersion = release.tag_name.replace('v', '');
           
           console.log('📋 Current version:', currentVersion);
@@ -1011,6 +1139,11 @@ async function checkForUpdates() {
           }
         } catch (parseError) {
           console.error('❌ Error parsing GitHub API response:', parseError);
+          console.error('❌ Raw response data:', data);
+          const errorMessage = 'Failed to parse update information: ' + parseError.message;
+          if (mainWindow) {
+            mainWindow.webContents.send('update-error', errorMessage);
+          }
           reject(parseError);
         }
       });
@@ -1048,15 +1181,20 @@ async function checkForUpdatesManual() {
   console.log('📋 Current version:', app.getVersion());
   
   try {
-    const result = await checkForUpdates();
+    const result = await checkForUpdates(true); // Force check for manual requests
     console.log('✅ Manual update check completed:', result);
     return result;
   } catch (error) {
     console.error('❌ Manual update check failed:', error);
+    const errorMessage = error.message || 'Unknown error occurred';
     if (mainWindow) {
-      mainWindow.webContents.send('update-error', error.message);
+      mainWindow.webContents.send('update-error', errorMessage);
     }
-    return { updateInfo: null, message: 'Update check failed: ' + error.message };
+    return { 
+      updateInfo: null, 
+      message: 'Update check failed: ' + errorMessage,
+      error: errorMessage
+    };
   }
 }
 
@@ -1446,7 +1584,9 @@ ipcMain.on('open-settings', () => {
 });
 
 ipcMain.handle('update-settings', (event, newSettings) => {
+  console.log('🔧 Updating settings with:', JSON.stringify(newSettings, null, 2));
   settings = { ...settings, ...newSettings };
+  console.log('🔧 Updated settings:', JSON.stringify(settings, null, 2));
   
   // Save settings to file
   saveSettings();
@@ -1477,6 +1617,24 @@ ipcMain.handle('update-settings', (event, newSettings) => {
   
   // If widget window settings changed, update widget
   if (newSettings.widgetWindow !== undefined) {
+    // Update existing widget properties if widget exists
+    if (widgetWindow && !widgetWindow.isDestroyed()) {
+      widgetWindow.setAlwaysOnTop(newSettings.widgetWindow.alwaysOnTop);
+      widgetWindow.setOpacity(newSettings.widgetWindow.opacity);
+      // Set transparent background if enabled
+      if (newSettings.widgetWindow.transparent) {
+        widgetWindow.setBackgroundColor('#00000000');
+      } else {
+        widgetWindow.setBackgroundColor('#1a1a2e');
+      }
+      console.log('🔧 Widget properties updated:', {
+        alwaysOnTop: newSettings.widgetWindow.alwaysOnTop,
+        opacity: newSettings.widgetWindow.opacity,
+        transparent: newSettings.widgetWindow.transparent
+      });
+    }
+    
+    // Handle widget enable/disable
     if (newSettings.widgetWindow.enabled) {
       if (!widgetWindow) {
         createWidgetWindow();
@@ -1489,11 +1647,6 @@ ipcMain.handle('update-settings', (event, newSettings) => {
           }
         }, 500);
       } else {
-        // Update existing widget properties
-        widgetWindow.setAlwaysOnTop(newSettings.widgetWindow.alwaysOnTop);
-        widgetWindow.setOpacity(newSettings.widgetWindow.opacity);
-        // Always keep transparent background
-        widgetWindow.setBackgroundColor('#00000000');
         widgetWindow.show();
         widgetWindow.focus();
       }
