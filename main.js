@@ -88,6 +88,7 @@ try {
 }
 
 let mainWindow;
+let widgetWindow = null;
 let tray = null;
 let stockData = [];
 let scraper;
@@ -111,7 +112,22 @@ let settings = {
     },
     playNotification: true,
     notificationVolume: 0.7,
-    updateInterval: 30
+    updateInterval: 30,
+    daysOff: {
+        sunday: false,
+        monday: false,
+        tuesday: false,
+        wednesday: false,
+        thursday: false,
+        friday: true,
+        saturday: true
+    },
+    widgetWindow: {
+        enabled: false,
+        alwaysOnTop: true,
+        transparent: true,
+        opacity: 0.9
+    }
 };
 
 // Settings file path - will be set when app is ready
@@ -277,8 +293,6 @@ function createWindow() {
   });
 }
 
-<<<<<<< Updated upstream
-=======
 // Create widget window
 function createWidgetWindow() {
   console.log('🔧 Creating widget window...');
@@ -652,7 +666,6 @@ function updateTrayMenu() {
   }
 }
 
->>>>>>> Stashed changes
 // Create system tray
 function createTray() {
   if (tray) {
@@ -694,38 +707,35 @@ function createTray() {
       }
     },
     { type: 'separator' },
-    {
-<<<<<<< Updated upstream
-=======
-      label: 'Toggle Widget',
-      click: () => {
-        if (widgetWindow) {
-          if (widgetWindow.isVisible()) {
-            widgetWindow.hide();
-            settings.widgetWindow.enabled = false;
-          } else {
-            widgetWindow.show();
-            widgetWindow.focus();
-            settings.widgetWindow.enabled = true;
-          }
-        } else {
-          createWidgetWindow();
-          settings.widgetWindow.enabled = true;
-          setTimeout(() => {
-            if (widgetWindow) {
-              widgetWindow.show();
-              widgetWindow.focus();
-            }
-          }, 500);
-        }
-        // Update settings checkbox in main window
-        if (mainWindow) {
-          mainWindow.webContents.send('update-widget-checkbox', settings.widgetWindow.enabled);
-        }
-      }
+                {
+                  label: 'Toggle Widget',
+                  click: () => {
+                    if (widgetWindow) {
+                      if (widgetWindow.isVisible()) {
+                        widgetWindow.hide();
+                        settings.widgetWindow.enabled = false;
+                      } else {
+                        widgetWindow.show();
+                        widgetWindow.focus();
+                        settings.widgetWindow.enabled = true;
+                      }
+                    } else {
+                      createWidgetWindow();
+                      settings.widgetWindow.enabled = true;
+                      setTimeout(() => {
+                        if (widgetWindow) {
+                          widgetWindow.show();
+                          widgetWindow.focus();
+                        }
+                      }, 500);
+                    }
+                    // Update settings checkbox in main window
+                    if (mainWindow) {
+                      mainWindow.webContents.send('update-widget-checkbox', settings.widgetWindow.enabled);
+                    }
+                  }
     },
     {
->>>>>>> Stashed changes
       label: 'Settings',
       click: () => {
         if (mainWindow) {
@@ -740,9 +750,28 @@ function createTray() {
     {
       label: 'Quit',
       click: () => {
+        console.log('🔄 Quit requested from tray');
         // Force quit even if closeToTray is enabled
         app.isQuiting = true;
-        app.quit();
+        
+        // Stop all processes
+        if (scraper) {
+          scraper.stopAutoUpdate();
+        }
+        stopMarketTimeChecking();
+        
+        // Close all windows safely
+        if (widgetWindow && !widgetWindow.isDestroyed()) {
+          widgetWindow.destroy();
+        }
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.destroy();
+        }
+        
+        // Force quit after a short delay to ensure cleanup
+        setTimeout(() => {
+          app.exit(0);
+        }, 100);
       }
     }
   ]);
@@ -793,8 +822,29 @@ async function initializeWebScraper() {
     console.log(`📊 Updated stock data: ${data.length} stocks`);
     
     // Send updated data to renderer
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('stock-data-updated', stockData);
+    }
+    
+    // Send watchlist updates to widget if enabled
+    if (widgetWindow && !widgetWindow.isDestroyed() && settings.widgetWindow.enabled) {
+      // Get watchlist from main window's localStorage
+      try {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.executeJavaScript(`
+            const watchlist = localStorage.getItem('egyptianStocksWatchlist');
+            return watchlist ? JSON.parse(watchlist) : [];
+          `).then(watchlistData => {
+            if (widgetWindow && !widgetWindow.isDestroyed()) {
+            widgetWindow.webContents.send('watchlist-updated', watchlistData);
+            }
+          }).catch(error => {
+            console.error('Error getting watchlist data:', error);
+          });
+        }
+      } catch (error) {
+        console.error('Error sending watchlist to widget:', error);
+      }
     }
   });
 }
@@ -815,8 +865,29 @@ async function refreshStockData() {
       stockData = data;
       
       // Send updated data to renderer
-      if (mainWindow) {
+      if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('stock-data-updated', stockData);
+      }
+      
+      // Send watchlist updates to widget if enabled
+      if (widgetWindow && !widgetWindow.isDestroyed() && settings.widgetWindow.enabled) {
+        try {
+          // Get watchlist data from main window's localStorage
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.executeJavaScript(`
+              const watchlist = localStorage.getItem('egyptianStocksWatchlist');
+              return watchlist ? JSON.parse(watchlist) : [];
+            `).then(watchlistData => {
+              if (widgetWindow && !widgetWindow.isDestroyed()) {
+              widgetWindow.webContents.send('watchlist-updated', watchlistData);
+              }
+            }).catch(error => {
+              console.error('Error getting watchlist data:', error);
+            });
+          }
+        } catch (error) {
+          console.error('Error sending watchlist to widget:', error);
+        }
       }
       
       console.log(`✅ Stock data refreshed: ${data.length} stocks`);
@@ -1007,8 +1078,6 @@ ipcMain.handle('open-download-page', () => {
   }
 });
 
-<<<<<<< Updated upstream
-=======
 // Widget window IPC handlers
 ipcMain.handle('toggle-widget-window', () => {
   try {
@@ -1361,7 +1430,6 @@ ipcMain.handle('show-widget-window', () => {
 });
 
 
->>>>>>> Stashed changes
 // Install update handler removed - users download manually from GitHub
 
     ipcMain.handle('get-settings', () => {
@@ -1388,8 +1456,8 @@ ipcMain.handle('update-settings', (event, newSettings) => {
     checkForUpdatesIfEnabled();
   }
   
-  // If market time settings changed, restart market time checking and update scraper
-  if (newSettings.marketOpenTime !== undefined || newSettings.marketCloseTime !== undefined) {
+  // If market time settings or days off changed, restart market time checking and update scraper
+  if (newSettings.marketOpenTime !== undefined || newSettings.marketCloseTime !== undefined || newSettings.daysOff !== undefined) {
     stopMarketTimeChecking();
     startMarketTimeChecking();
     
@@ -1404,6 +1472,36 @@ ipcMain.handle('update-settings', (event, newSettings) => {
     if (scraper) {
       scraper.setUpdateInterval(newSettings.updateInterval * 1000); // Convert seconds to milliseconds
       console.log(`⏰ Update interval changed to ${newSettings.updateInterval} seconds`);
+    }
+  }
+  
+  // If widget window settings changed, update widget
+  if (newSettings.widgetWindow !== undefined) {
+    if (newSettings.widgetWindow.enabled) {
+      if (!widgetWindow) {
+        createWidgetWindow();
+        // Force show the widget after creation
+        setTimeout(() => {
+          if (widgetWindow) {
+            widgetWindow.show();
+            widgetWindow.focus();
+            console.log('Widget window created and shown from settings');
+          }
+        }, 500);
+      } else {
+        // Update existing widget properties
+        widgetWindow.setAlwaysOnTop(newSettings.widgetWindow.alwaysOnTop);
+        widgetWindow.setOpacity(newSettings.widgetWindow.opacity);
+        // Always keep transparent background
+        widgetWindow.setBackgroundColor('#00000000');
+        widgetWindow.show();
+        widgetWindow.focus();
+      }
+    } else {
+      if (widgetWindow) {
+        widgetWindow.close();
+        widgetWindow = null;
+      }
     }
   }
   
@@ -1422,38 +1520,64 @@ let marketTimeInterval = null;
 let lastMarketState = null; // 'open', 'closed', or null
 
 function checkMarketStatus() {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTime = currentHour * 60 + currentMinute;
-    
-    const openTime = settings.marketOpenTime.hour * 60 + settings.marketOpenTime.minute;
-    const closeTime = settings.marketCloseTime.hour * 60 + settings.marketCloseTime.minute;
-    
-    let currentMarketState;
-    if (currentTime >= openTime && currentTime < closeTime) {
-        currentMarketState = 'open';
-    } else {
-        currentMarketState = 'closed';
-    }
-    
-    // Only notify if state changed and notifications are enabled
-    if (lastMarketState !== null && lastMarketState !== currentMarketState && settings.playNotification) {
-        const message = currentMarketState === 'open' ? 'Market Open' : 'Market Closed';
-        console.log(`🔔 Market state changed! Sending notification: ${message}`);
-        showNotification(message);
-        playNotificationSound();
-    }
-    
-    lastMarketState = currentMarketState;
-    
-    // Send market status to renderer
-    if (mainWindow) {
-        mainWindow.webContents.send('market-status-updated', {
-            status: currentMarketState,
-            openTime: settings.marketOpenTime,
-            closeTime: settings.marketCloseTime
-        });
+    try {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTime = currentHour * 60 + currentMinute;
+        const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+        
+        // Check if today is a day off
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const todayName = dayNames[currentDay];
+        const isDayOff = settings.daysOff && settings.daysOff[todayName] || false;
+        
+        const openTime = (settings.marketOpenTime && settings.marketOpenTime.hour * 60 + settings.marketOpenTime.minute) || (10 * 60); // Default 10:00 AM
+        const closeTime = (settings.marketCloseTime && settings.marketCloseTime.hour * 60 + settings.marketCloseTime.minute) || (14 * 60 + 30); // Default 2:30 PM
+        
+        let currentMarketState;
+        if (isDayOff) {
+            currentMarketState = 'closed'; // Market is closed on days off
+        } else if (currentTime >= openTime && currentTime < closeTime) {
+            currentMarketState = 'open';
+        } else {
+            currentMarketState = 'closed';
+        }
+        
+        console.log(`📊 Market status check: ${currentMarketState} (Day: ${todayName}, Time: ${currentHour}:${currentMinute.toString().padStart(2, '0')}, DayOff: ${isDayOff})`);
+        
+        // Only notify if state changed and notifications are enabled
+        if (lastMarketState !== null && lastMarketState !== currentMarketState && settings.playNotification) {
+            const message = currentMarketState === 'open' ? 'Market Open' : 'Market Closed';
+            console.log(`🔔 Market state changed! Sending notification: ${message}`);
+            showNotification(message);
+            playNotificationSound();
+        }
+        
+        lastMarketState = currentMarketState;
+        
+        // Send market status to renderer
+        if (mainWindow) {
+            mainWindow.webContents.send('market-status-updated', {
+                status: currentMarketState,
+                openTime: settings.marketOpenTime || { hour: 10, minute: 0 },
+                closeTime: settings.marketCloseTime || { hour: 14, minute: 30 },
+                isDayOff: isDayOff,
+                currentDay: todayName
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error checking market status:', error);
+        // Send error status to renderer
+        if (mainWindow) {
+            mainWindow.webContents.send('market-status-updated', {
+                status: 'closed',
+                openTime: settings.marketOpenTime || { hour: 10, minute: 0 },
+                closeTime: settings.marketCloseTime || { hour: 14, minute: 30 },
+                isDayOff: false,
+                currentDay: 'error'
+            });
+        }
     }
 }
 
@@ -1520,6 +1644,12 @@ function startMarketTimeChecking() {
     // Then check every minute
     marketTimeInterval = setInterval(checkMarketStatus, 60000);
     console.log('Market time checking started');
+    
+    // Send initial status to ensure UI is updated
+    if (mainWindow) {
+        console.log('📊 Sending initial market status to UI...');
+        checkMarketStatus();
+    }
 }
 
 function stopMarketTimeChecking() {
@@ -1563,6 +1693,22 @@ app.whenReady().then(() => {
   
   // Start market time checking
   startMarketTimeChecking();
+  
+  // Ensure market status is updated after window is ready
+  setTimeout(() => {
+    if (mainWindow) {
+      console.log('📊 Ensuring market status is updated...');
+      checkMarketStatus();
+    }
+  }, 1000);
+  
+  // Show widget if enabled in settings
+  setTimeout(() => {
+    if (settings.widgetWindow && settings.widgetWindow.enabled && mainWindow && !mainWindow.isDestroyed()) {
+      console.log('📊 Widget enabled in settings, creating widget window...');
+      createWidgetWindow();
+    }
+  }, 2000);
   
   // Check for updates after a short delay to allow window to load
   setTimeout(() => {

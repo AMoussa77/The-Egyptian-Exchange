@@ -237,6 +237,13 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
+            padding-bottom: 100px; /* Increased bottom padding to prevent footer overlap */
+            min-height: calc(100vh - 200px); /* Ensure minimum height */
+        }
+
+        /* Ensure main content has proper spacing */
+        .main-content {
+            padding-bottom: 60px; /* Additional padding for main content */
         }
 
         .search-container {
@@ -290,6 +297,7 @@
         .table-container {
             max-height: 600px;
             overflow-y: auto;
+            margin-bottom: 20px; /* Add margin to ensure space above footer */
         }
 
         table {
@@ -492,6 +500,83 @@
             display: none;
         }
 
+        /* Custom Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(40, 40, 60, 0.3);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            border-radius: 6px;
+            border: 2px solid rgba(40, 40, 60, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #5ba0f2, #4a8acd);
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb:active {
+            background: linear-gradient(45deg, #3a80d2, #2a6a9d);
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: rgba(40, 40, 60, 0.3);
+        }
+
+        /* Firefox scrollbar styles */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #4a90e2 rgba(40, 40, 60, 0.3);
+        }
+
+        /* Modal scrollbar styles */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(20, 20, 40, 0.5);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            border-radius: 4px;
+            border: 1px solid rgba(20, 20, 40, 0.5);
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #5ba0f2, #4a8acd);
+        }
+
+        /* Settings modal specific scrollbar */
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(30, 30, 50, 0.3);
+            border-radius: 4px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            border-radius: 4px;
+            border: 1px solid rgba(30, 30, 50, 0.3);
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #5ba0f2, #4a8acd);
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .header {
@@ -555,6 +640,23 @@
                 height: 35px;
                 font-size: 14px;
             }
+            
+            .container {
+                padding-bottom: 120px; /* Extra padding on mobile */
+            }
+            
+            .main-content {
+                padding-bottom: 80px; /* Extra padding on mobile */
+            }
+            
+            .modal-content {
+                max-height: 90vh; /* More height on mobile */
+                width: 95%;
+            }
+            
+            .modal-body {
+                max-height: calc(90vh - 120px); /* Adjust for mobile */
+            }
         }
 
         /* Modal Styles */
@@ -582,6 +684,8 @@
             overflow: hidden;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-header {
@@ -591,6 +695,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0; /* Prevent header from shrinking */
         }
 
         .modal-header h2 {
@@ -623,6 +728,9 @@
         .modal-body {
             padding: 20px;
             color: #e0e0e0;
+            overflow-y: auto;
+            flex: 1;
+            max-height: calc(80vh - 140px); /* Account for header and footer */
         }
 
         .modal-footer {
@@ -631,6 +739,7 @@
             display: flex;
             gap: 10px;
             justify-content: flex-end;
+            flex-shrink: 0; /* Prevent footer from shrinking */
         }
 
         .btn-secondary {
@@ -820,7 +929,7 @@
         <div id="status" class="status" style="display: none;"></div>
     </div>
 
-    <div class="container">
+    <div class="container main-content">
         <div class="tabs">
             <button class="tab active" onclick="switchTab('all-stocks')">📈 All Stocks</button>
             <button class="tab" onclick="switchTab('watchlist')">⭐ Watchlist</button>
@@ -963,8 +1072,6 @@
                     <input type="number" id="updateInterval" min="5" max="300" step="5" value="30" style="width: 80px; margin-right: 10px;">
                     <span id="intervalDisplay">30 seconds</span>
                 </div>
-<<<<<<< Updated upstream
-=======
                 <div class="setting-item" style="flex-direction: column; align-items: flex-start; margin: 20px 0;">
                     <label style="margin-bottom: 10px; font-weight: 600; color: #ffffff;">Days Off (Market Closed):</label>
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%;">
@@ -1039,9 +1146,9 @@
                     </div>
                     <div class="setting-item" style="margin: 10px 0;">
                         <button class="btn btn-small" onclick="toggleWidgetWindow()" id="toggleWidgetBtn">📊 Toggle Widget</button>
+                        <button class="btn btn-small" onclick="sendWatchlistToWidget()" id="sendDataBtn" style="margin-left: 10px;">📤 Send Data</button>
                     </div>
                 </div>
->>>>>>> Stashed changes
                 <div class="setting-item">
                     <button class="btn" onclick="checkForUpdates()" id="checkUpdateBtn">🔍 Check for Updates</button>
                 </div>
@@ -1086,9 +1193,39 @@
             startAutoRefresh();
             setupVolumeSlider();
             setupUpdateInterval();
+            setupWidgetOpacitySlider();
+            
+            // Setup widget enabled checkbox
+            setupWidgetEnabledCheckbox();
             
             // Initialize market status indicator
             updateMarketStatusIndicator({ status: 'loading' });
+            
+            // Set a fallback timeout to ensure market status updates
+            setTimeout(() => {
+                const marketStatusElement = document.getElementById('marketStatus');
+                if (marketStatusElement && marketStatusElement.textContent.includes('Loading')) {
+                    console.log('⚠️ Market status still loading, applying fallback...');
+                    // Apply a basic market status check as fallback
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const currentMinute = now.getMinutes();
+                    const currentTime = currentHour * 60 + currentMinute;
+                    const openTime = 10 * 60; // 10:00 AM
+                    const closeTime = 14 * 60 + 30; // 2:30 PM
+                    
+                    let fallbackStatus = 'closed';
+                    if (currentTime >= openTime && currentTime < closeTime) {
+                        fallbackStatus = 'open';
+                    }
+                    
+                    updateMarketStatusIndicator({ 
+                        status: fallbackStatus,
+                        isDayOff: false,
+                        currentDay: 'unknown'
+                    });
+                }
+            }, 3000); // 3 second fallback
             
             // Wait a bit for DOM to be fully ready
             setTimeout(() => {
@@ -1176,6 +1313,7 @@
             try {
                 localStorage.setItem('egyptianStocksWatchlist', JSON.stringify(watchlist));
                 console.log('Watchlist saved:', watchlist.length, 'stocks');
+                sendWatchlistToWidget(); // Send to widget when watchlist is saved
             } catch (error) {
                 console.error('Error saving watchlist:', error);
             }
@@ -1963,8 +2101,6 @@
             console.log('Market status updated:', data);
             updateMarketStatusIndicator(data);
         });
-<<<<<<< Updated upstream
-=======
         
         // Listen for widget checkbox updates from tray
         ipcRenderer.on('update-widget-checkbox', (event, enabled) => {
@@ -2059,7 +2195,6 @@
                 showStatus('Test widget error: ' + error.message, 'error');
             }
         }
->>>>>>> Stashed changes
 
         // Update market status indicator in header
         function updateMarketStatusIndicator(data) {
@@ -2073,7 +2208,11 @@
                 marketStatusElement.textContent = '🟢 Market Open';
                 marketStatusElement.classList.add('open');
             } else if (data.status === 'closed') {
-                marketStatusElement.textContent = '🔴 Market Closed';
+                if (data.isDayOff) {
+                    marketStatusElement.textContent = '🔴 Market Closed (Day Off)';
+                } else {
+                    marketStatusElement.textContent = '🔴 Market Closed';
+                }
                 marketStatusElement.classList.add('closed');
             } else {
                 marketStatusElement.textContent = '📊 Loading...';
@@ -2289,6 +2428,68 @@
             console.log('Volume setting saved:', volume);
         }
 
+        // Widget window functions
+        async function toggleWidgetWindow() {
+            try {
+                const result = await ipcRenderer.invoke('toggle-widget-window');
+                if (result && result.success !== undefined) {
+                    // Update the checkbox based on widget visibility
+                    const widgetEnabledCheckbox = document.getElementById('widgetEnabled');
+                    if (widgetEnabledCheckbox) {
+                        widgetEnabledCheckbox.checked = result.visible || false;
+                        // Save the setting
+                        await saveSettings();
+                    }
+                    // Send current watchlist to widget
+                    sendWatchlistToWidget();
+                }
+            } catch (error) {
+                console.error('Error toggling widget window:', error);
+                showStatus('Error toggling widget window: ' + error.message, 'error');
+            }
+        }
+        
+        
+        // Setup widget opacity slider
+        function setupWidgetOpacitySlider() {
+            const opacitySlider = document.getElementById('widgetOpacity');
+            const opacityDisplay = document.getElementById('widgetOpacityDisplay');
+            
+            if (opacitySlider && opacityDisplay) {
+                function updateOpacityDisplay() {
+                    const opacity = parseFloat(opacitySlider.value);
+                    opacityDisplay.textContent = Math.round(opacity * 100) + '%';
+                }
+                
+                opacitySlider.addEventListener('input', updateOpacityDisplay);
+                opacitySlider.addEventListener('change', updateOpacityDisplay);
+            }
+        }
+        
+        // Setup widget enabled checkbox
+        function setupWidgetEnabledCheckbox() {
+            const widgetEnabledCheckbox = document.getElementById('widgetEnabled');
+            
+            if (widgetEnabledCheckbox) {
+                widgetEnabledCheckbox.addEventListener('change', async function() {
+                    try {
+                        if (this.checked) {
+                            // Show widget
+                            await ipcRenderer.invoke('show-widget-window');
+                        } else {
+                            // Hide widget
+                            await ipcRenderer.invoke('hide-widget-window');
+                        }
+                        // Save settings
+                        await saveSettings();
+                    } catch (error) {
+                        console.error('Error toggling widget from checkbox:', error);
+                        showStatus('Error toggling widget: ' + error.message, 'error');
+                    }
+                });
+            }
+        }
+
         // Test notification sound function
         async function testNotificationSound() {
             try {
@@ -2420,6 +2621,47 @@
                     console.log('Update interval set to:', settings.updateInterval, 'seconds');
                 }
                 
+                // Set days off checkboxes
+                const dayCheckboxes = {
+                    sundayOff: settings.daysOff?.sunday || false,
+                    mondayOff: settings.daysOff?.monday || false,
+                    tuesdayOff: settings.daysOff?.tuesday || false,
+                    wednesdayOff: settings.daysOff?.wednesday || false,
+                    thursdayOff: settings.daysOff?.thursday || false,
+                    fridayOff: settings.daysOff?.friday || false,
+                    saturdayOff: settings.daysOff?.saturday || false
+                };
+                
+                Object.keys(dayCheckboxes).forEach(checkboxId => {
+                    const checkbox = document.getElementById(checkboxId);
+                    if (checkbox) {
+                        checkbox.checked = dayCheckboxes[checkboxId];
+                        console.log(`${checkboxId} set to:`, dayCheckboxes[checkboxId]);
+                    }
+                });
+                
+                // Set widget window settings
+                const widgetEnabledCheckbox = document.getElementById('widgetEnabled');
+                const widgetAlwaysOnTopCheckbox = document.getElementById('widgetAlwaysOnTop');
+                const widgetTransparentCheckbox = document.getElementById('widgetTransparent');
+                const widgetOpacitySlider = document.getElementById('widgetOpacity');
+                const widgetOpacityDisplay = document.getElementById('widgetOpacityDisplay');
+                
+                if (widgetEnabledCheckbox) {
+                    widgetEnabledCheckbox.checked = settings.widgetWindow?.enabled || false;
+                }
+                if (widgetAlwaysOnTopCheckbox) {
+                    widgetAlwaysOnTopCheckbox.checked = settings.widgetWindow?.alwaysOnTop || true;
+                }
+                if (widgetTransparentCheckbox) {
+                    widgetTransparentCheckbox.checked = settings.widgetWindow?.transparent || true;
+                }
+                if (widgetOpacitySlider && widgetOpacityDisplay) {
+                    const opacity = settings.widgetWindow?.opacity || 0.9;
+                    widgetOpacitySlider.value = opacity;
+                    widgetOpacityDisplay.textContent = Math.round(opacity * 100) + '%';
+                }
+                
                 console.log('Settings loaded successfully');
             } catch (error) {
                 console.error('Error loading settings:', error);
@@ -2447,8 +2689,26 @@
                 const marketCloseTimeInput = document.getElementById('marketCloseTime');
                 const updateIntervalInput = document.getElementById('updateInterval');
                 
+                // Get days off checkboxes
+                const sundayOffCheckbox = document.getElementById('sundayOff');
+                const mondayOffCheckbox = document.getElementById('mondayOff');
+                const tuesdayOffCheckbox = document.getElementById('tuesdayOff');
+                const wednesdayOffCheckbox = document.getElementById('wednesdayOff');
+                const thursdayOffCheckbox = document.getElementById('thursdayOff');
+                const fridayOffCheckbox = document.getElementById('fridayOff');
+                const saturdayOffCheckbox = document.getElementById('saturdayOff');
+                
+                // Get widget window settings
+                const widgetEnabledCheckbox = document.getElementById('widgetEnabled');
+                const widgetAlwaysOnTopCheckbox = document.getElementById('widgetAlwaysOnTop');
+                const widgetTransparentCheckbox = document.getElementById('widgetTransparent');
+                const widgetOpacitySlider = document.getElementById('widgetOpacity');
+                
                 if (!autoUpdateCheckbox || !minimizeToTrayCheckbox || !closeToTrayCheckbox || 
-                    !playNotificationCheckbox || !volumeSlider || !marketOpenTimeInput || !marketCloseTimeInput || !updateIntervalInput) {
+                    !playNotificationCheckbox || !volumeSlider || !marketOpenTimeInput || !marketCloseTimeInput || !updateIntervalInput ||
+                    !sundayOffCheckbox || !mondayOffCheckbox || !tuesdayOffCheckbox || !wednesdayOffCheckbox || 
+                    !thursdayOffCheckbox || !fridayOffCheckbox || !saturdayOffCheckbox ||
+                    !widgetEnabledCheckbox || !widgetAlwaysOnTopCheckbox || !widgetTransparentCheckbox || !widgetOpacitySlider) {
                     console.error('One or more form elements not found');
                     showStatus('Error: Settings form elements not found', 'error');
                     return;
@@ -2471,6 +2731,25 @@
                 const marketOpenTime = { hour: openHour, minute: openMinute };
                 const marketCloseTime = { hour: closeHour, minute: closeMinute };
                 
+                // Get days off settings
+                const daysOff = {
+                    sunday: sundayOffCheckbox.checked,
+                    monday: mondayOffCheckbox.checked,
+                    tuesday: tuesdayOffCheckbox.checked,
+                    wednesday: wednesdayOffCheckbox.checked,
+                    thursday: thursdayOffCheckbox.checked,
+                    friday: fridayOffCheckbox.checked,
+                    saturday: saturdayOffCheckbox.checked
+                };
+                
+                // Get widget window settings
+                const widgetWindow = {
+                    enabled: widgetEnabledCheckbox.checked,
+                    alwaysOnTop: widgetAlwaysOnTopCheckbox.checked,
+                    transparent: widgetTransparentCheckbox.checked,
+                    opacity: parseFloat(widgetOpacitySlider.value)
+                };
+                
                 console.log('Saving settings:', {
                     autoUpdate: autoUpdateEnabled,
                     minimizeToTray: minimizeToTray,
@@ -2479,7 +2758,9 @@
                     notificationVolume: notificationVolume,
                     marketOpenTime: marketOpenTime,
                     marketCloseTime: marketCloseTime,
-                    updateInterval: updateInterval
+                    updateInterval: updateInterval,
+                    daysOff: daysOff,
+                    widgetWindow: widgetWindow
                 });
                 
                 const result = await ipcRenderer.invoke('update-settings', { 
@@ -2490,7 +2771,9 @@
                     notificationVolume: notificationVolume,
                     marketOpenTime: marketOpenTime,
                     marketCloseTime: marketCloseTime,
-                    updateInterval: updateInterval
+                    updateInterval: updateInterval,
+                    daysOff: daysOff,
+                    widgetWindow: widgetWindow
                 });
                 
                 console.log('Settings saved successfully:', result);
@@ -2544,18 +2827,19 @@
         right: 0;
         background: rgba(20, 20, 40, 0.95);
         backdrop-filter: blur(10px);
-        padding: 8px 20px;
+        padding: 12px 20px;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         text-align: center;
         font-size: 0.8em;
         color: #b0b0b0;
         z-index: 1000;
+        height: 50px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     ">
-<<<<<<< Updated upstream
-        <p>The Egyptian Exchange App v<span id="appVersion">0.6.9</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
-=======
         <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.7.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
->>>>>>> Stashed changes
     </footer>
 </body>
 </html>
