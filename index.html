@@ -1055,8 +1055,7 @@
                 <div id="loadingSpinner" class="loading-spinner" style="display: none;"></div>
             </div>
             <div class="controls">
-                <button class="btn" onclick="refreshQueriesAndData()">🔄 Refresh</button>
-                <button class="btn" onclick="exportData()">📊 Export</button>
+                <button class="btn" onclick="refreshQueriesAndData(true)">🔄 Refresh</button>
                 <button class="btn" onclick="showSettingsModal()">⚙️ Settings</button>
             </div>
         </div>
@@ -1380,6 +1379,19 @@
                         <button class="btn btn-small" onclick="toggleWidgetWindow()" id="toggleWidgetBtn">📊 Toggle Widget</button>
                     </div>
                 </div>
+                <div class="setting-item" style="flex-direction: column; align-items: flex-start; margin: 20px 0;">
+                    <label style="margin-bottom: 10px; font-weight: 600; color: #ffffff;">💾 Wallet Data Backup & Restore:</label>
+                    <div style="display: flex; gap: 10px; width: 100%; flex-wrap: wrap;">
+                        <button class="btn" onclick="backupWalletData()" id="backupBtn">💾 Backup Wallet Data</button>
+                        <button class="btn" onclick="restoreWalletData()" id="restoreBtn">📥 Restore Wallet Data</button>
+                    </div>
+                    <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="handleRestoreFile(event)">
+                    <p style="font-size: 12px; color: #888; margin-top: 10px; line-height: 1.4;">
+                        Backup includes: Portfolio holdings and Transaction history.<br>
+                        Restore will replace current wallet data with backup data.
+                    </p>
+                </div>
+                
                 <div class="setting-item">
                     <button class="btn" onclick="checkForUpdates()" id="checkUpdateBtn">🔍 Check for Updates</button>
                 </div>
@@ -1396,7 +1408,7 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.8.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.9.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
             </div>
         </div>
     </div>
@@ -1616,6 +1628,55 @@
         </div>
     </div>
 
+    <!-- Restore Confirmation Modal -->
+    <div id="restoreConfirmModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>📥 Restore Wallet Data</h3>
+                <button class="close-btn" onclick="hideRestoreConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 24px; margin-right: 10px;">⚠️</span>
+                        <strong style="color: #ffc107;">Warning: This will replace your current data</strong>
+                    </div>
+                    <p style="margin: 0; color: #fff3cd; font-size: 14px;">
+                        Your current portfolio and transaction history will be permanently replaced with the backup data.
+                    </p>
+                </div>
+                
+                <div style="background: rgba(40, 167, 69, 0.1); border: 1px solid rgba(40, 167, 69, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #28a745; display: flex; align-items: center;">
+                        <span style="margin-right: 8px;">📊</span>
+                        Backup File Contents:
+                    </h4>
+                    <div id="restoreBackupInfo" style="color: #d4edda;">
+                        <!-- Backup info will be populated here -->
+                    </div>
+                </div>
+                
+                <div style="background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 8px; padding: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #dc3545; display: flex; align-items: center;">
+                        <span style="margin-right: 8px;">🗑️</span>
+                        Current Data (will be lost):
+                    </h4>
+                    <div id="restoreCurrentInfo" style="color: #f8d7da;">
+                        <!-- Current info will be populated here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="confirmRestore()" id="confirmRestoreBtn" style="background: linear-gradient(45deg, #28a745, #20c997); border: none;">
+                    📥 Yes, Restore Data
+                </button>
+                <button class="btn btn-secondary" onclick="hideRestoreConfirmModal()">
+                    ❌ Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const { ipcRenderer } = require('electron');
         let allStocks = [];
@@ -1634,6 +1695,13 @@
         let watchlistSortDirection = '';
         let columnVisibility = {};
         let availableColumns = [];
+        let currentMarketStatus = { status: 'loading', isDayOff: false };
+        let startupRetryCount = 0;
+        let isStartupPhase = true;
+        let startupRetryTimer = null;
+        let manualRefreshRetryCount = 0;
+        let isManualRefreshRetrying = false;
+        let manualRefreshRetryTimer = null;
 
         // Load initial data
         window.addEventListener('DOMContentLoaded', async () => {
@@ -1641,6 +1709,13 @@
             loadWatchlist();
             loadPortfolio();
             loadAppVersion();
+            
+            // Trigger initial data load that overrides market status (like manual refresh)
+            console.log('🚀 App startup - requesting initial data (overriding market status)');
+            setTimeout(() => {
+                startupDataLoad(); // Use dedicated startup function with retry logic
+            }, 1000); // Small delay to ensure everything is initialized
+            
             startAutoRefresh();
             setupVolumeSlider();
             setupUpdateInterval();
@@ -1693,9 +1768,13 @@
             // Don't call loadStockData here - wait for stock-data-updated event
         });
 
-        async function loadStockData() {
+        async function loadStockData(isManualOrStartup = false) {
             try {
+                if (isManualOrStartup) {
+                    console.log('🔄 Requesting stock data from main process (manual/startup override)...');
+                } else {
                 console.log('🔄 Requesting stock data from main process...');
+                }
                 const data = await ipcRenderer.invoke('get-stock-data');
                 console.log('📊 Received data:', data ? data.length : 0, 'stocks');
                 console.log('📊 Data type:', typeof data);
@@ -1705,6 +1784,15 @@
                 }
                 
                 if (data && data.length > 0) {
+                    // Check if we have mock data (2 records) - NEVER load mock data
+                    if (data.length === 2) {
+                        console.log('⚠️ Mock data detected (2 records) - not loading mock data');
+                        // Just update the record counter to show the warning
+                        updateRecordCounter();
+                        return;
+                    }
+                    
+                    // Normal data - update as usual
                     allStocks = data;
                     // Preserve current search filter
                     if (currentSearchTerm) {
@@ -2278,9 +2366,16 @@
                     return `<td class="${className}">${displayValue}</td>`;
                 }).join('');
                 
-                const actionButton = `<button class="btn btn-small btn-remove" onclick="removeFromWatchlistByWatchlistIndex(${index})">Remove</button>`;
+                // Create action buttons similar to main stocks table
+                const stockName = stock['الإسم_المختصر'] || stock['Short Name'] || 'Unknown';
+                const isInPortfolio = portfolio.some(p => p.stockName === stockName);
                 
-                return `<tr>${row}<td>${actionButton}</td></tr>`;
+                const removeButton = `<button class="btn btn-small btn-remove" onclick="removeFromWatchlistByWatchlistIndex(${index})" title="Remove from Watchlist">⭐</button>`;
+                const buyButton = `<button class="btn btn-small btn-wallet" onclick="addToPortfolioFromWatchlist(${index})" title="Buy Stock">💰</button>`;
+                
+                const actionButtons = `<div style="display: flex; gap: 5px; justify-content: center;">${removeButton}${buyButton}</div>`;
+                
+                return `<tr>${row}<td>${actionButtons}</td></tr>`;
             }).join('');
 
             table.style.display = 'table';
@@ -2777,6 +2872,25 @@
                 showBuyStockModal(stockName, currentPrice, stock);
             } catch (error) {
                 console.error('Error adding to portfolio:', error);
+                showStatus('Error adding to portfolio', 'error');
+            }
+        }
+
+        function addToPortfolioFromWatchlist(index) {
+            try {
+                const stock = filteredWatchlist[index];
+                if (!stock) {
+                    showStatus('Stock not found in watchlist', 'error');
+                    return;
+                }
+                
+                const stockName = stock['الإسم_المختصر'] || stock['Short Name'] || 'Unknown';
+                const currentPrice = stock['أخر_سعر'] || stock['Last Price'] || 0;
+                
+                // Always open buy modal - allows adding more shares to existing portfolio
+                showBuyStockModal(stockName, currentPrice, stock);
+            } catch (error) {
+                console.error('Error adding to portfolio from watchlist:', error);
                 showStatus('Error adding to portfolio', 'error');
             }
         }
@@ -3375,9 +3489,108 @@
 
 
 
-        async function refreshQueriesAndData() {
+        async function startupDataLoad() {
             try {
+                console.log(`🚀 Startup data load attempt ${startupRetryCount + 1} (will retry until success)`);
                 showUpdating();
+                
+                const response = await ipcRenderer.invoke('refresh-queries-and-data');
+                
+                // Check if refresh was successful or skipped
+                if (!response.success) {
+                    console.log('⚠️ Startup data load - no success response, waiting for stock-data-updated event...');
+                    // Don't hide loading spinner yet - wait for event-based data
+                    // The stock-data-updated event will handle the retry logic
+                    return;
+                }
+                
+                // Check if we have mock data (2 records) at startup
+                if (response.data && response.data.length === 2) {
+                    startupRetryCount++;
+                    console.log(`⚠️ Mock data detected at startup (2 records) - attempt ${startupRetryCount}`);
+                    console.log(`🔄 Retrying in 3 seconds to get real data... (will keep trying until success)`);
+                    
+                    if (startupRetryTimer) clearTimeout(startupRetryTimer);
+                    startupRetryTimer = setTimeout(() => {
+                        startupDataLoad(); // Retry indefinitely
+                    }, 3000);
+                    return;
+                }
+                
+                // Success - we have real data
+                console.log(`✅ Startup data load successful with ${response.data.length} records`);
+                isStartupPhase = false; // End startup phase
+                startupRetryCount = 0; // Reset retry count for future use
+                if (startupRetryTimer) clearTimeout(startupRetryTimer);
+                
+                allStocks = response.data;
+                
+                // Update watchlist with fresh data
+                updateWatchlistWithFreshData();
+                
+                // Preserve current search filter
+                if (currentSearchTerm) {
+                    filteredStocks = allStocks.filter(stock => {
+                        return Object.values(stock).some(value => 
+                            String(value).toLowerCase().includes(currentSearchTerm.toLowerCase())
+                        );
+                    });
+                } else {
+                    filteredStocks = [...allStocks];
+                }
+                
+                // Reapply sorting if there's an active sort
+                if (currentSortColumn) {
+                    filteredStocks = sortData([...filteredStocks], currentSortColumn, currentSortDirection);
+                }
+                
+                displayStocks();
+                displayWatchlist();
+                updateLastUpdated();
+                updateRecordCounter();
+                
+            } catch (error) {
+                console.error('Error in startup data load:', error);
+                startupRetryCount++;
+                
+                console.log(`🔄 Startup error - retrying in 5 seconds... (attempt ${startupRetryCount}, will keep trying)`);
+                if (startupRetryTimer) clearTimeout(startupRetryTimer);
+                startupRetryTimer = setTimeout(() => {
+                    startupDataLoad(); // Retry indefinitely on error
+                }, 5000);
+            }
+        }
+
+        async function refreshQueriesAndData(isManualRefresh = false) {
+            try {
+                // Track manual refresh retry attempts
+                if (isManualRefresh) {
+                    if (!isManualRefreshRetrying) {
+                        manualRefreshRetryCount = 0; // Reset count for new manual refresh
+                        isManualRefreshRetrying = true;
+                    }
+                    manualRefreshRetryCount++;
+                    console.log(`🔄 Manual refresh attempt ${manualRefreshRetryCount} ${isManualRefreshRetrying && manualRefreshRetryCount > 1 ? '(retrying for real data)' : ''}`);
+                }
+                
+                showUpdating();
+                
+                // Check market status before refreshing (only for automatic updates)
+                if (!isManualRefresh && currentMarketStatus && currentMarketStatus.status === 'closed') {
+                    console.log('🔴 Market is closed - skipping auto update');
+                    // Hide loading spinner when market is closed
+                    const loadingSpinner = document.getElementById('loadingSpinner');
+                    if (loadingSpinner) {
+                        loadingSpinner.style.display = 'none';
+                    }
+                    return;
+                }
+                
+                // Log manual refresh override
+                if (isManualRefresh && currentMarketStatus && currentMarketStatus.status === 'closed') {
+                    console.log('🔄 Manual refresh - overriding market closed status');
+                }
+                
                 const response = await ipcRenderer.invoke('refresh-queries-and-data');
                 
                 // Check if refresh was successful or skipped
@@ -3388,6 +3601,40 @@
                         loadingSpinner.style.display = 'none';
                     }
                     return;
+                }
+                
+                // Check if we have mock data (2 records)
+                if (response.data && response.data.length === 2) {
+                    console.log('⚠️ Mock data detected (2 records)');
+                    
+                    // If this is a manual refresh, retry indefinitely
+                    if (isManualRefresh) {
+                        console.log(`🔄 Manual refresh - mock data retry ${manualRefreshRetryCount} (will keep trying until real data)`);
+                        console.log('🔄 Retrying in 3 seconds to get real data...');
+                        
+                        if (manualRefreshRetryTimer) clearTimeout(manualRefreshRetryTimer);
+                        manualRefreshRetryTimer = setTimeout(() => {
+                            refreshQueriesAndData(true); // Retry manual refresh
+                        }, 3000);
+                        return;
+                    } else {
+                        // Auto refresh - just keep existing data
+                        console.log('📊 Auto refresh - keeping existing scraped data');
+                        const loadingSpinner = document.getElementById('loadingSpinner');
+                        if (loadingSpinner) {
+                            loadingSpinner.style.display = 'none';
+                        }
+                        updateRecordCounter();
+                        return;
+                    }
+                }
+                
+                // Success - we have real data
+                if (isManualRefresh && isManualRefreshRetrying) {
+                    console.log(`✅ Manual refresh successful with ${response.data.length} records after ${manualRefreshRetryCount} attempts`);
+                    isManualRefreshRetrying = false;
+                    manualRefreshRetryCount = 0;
+                    if (manualRefreshRetryTimer) clearTimeout(manualRefreshRetryTimer);
                 }
                 
                 allStocks = response.data;
@@ -3416,15 +3663,223 @@
                 updateLastUpdated();
                 updateRecordCounter();
             } catch (error) {
+                console.error('Error refreshing data:', error);
+                
+                // If this is a manual refresh, retry indefinitely on error too
+                if (isManualRefresh) {
+                    console.log(`🔄 Manual refresh error - retrying in 5 seconds... (attempt ${manualRefreshRetryCount}, will keep trying)`);
+                    if (manualRefreshRetryTimer) clearTimeout(manualRefreshRetryTimer);
+                    manualRefreshRetryTimer = setTimeout(() => {
+                        refreshQueriesAndData(true); // Retry manual refresh on error
+                    }, 5000);
+                } else {
                 showStatus('Error refreshing data: ' + error.message, 'error');
                 // Hide loading spinner on error
                 const loadingSpinner = document.getElementById('loadingSpinner');
                 if (loadingSpinner) {
                     loadingSpinner.style.display = 'none';
+                    }
                 }
             }
         }
 
+        function backupWalletData() {
+            try {
+                // Create backup data object with portfolio and transactions
+                const backupData = {
+                    version: '0.9.0',
+                    timestamp: new Date().toISOString(),
+                    portfolio: portfolio,
+                    transactions: transactions
+                };
+                
+                // Convert to JSON
+                const jsonContent = JSON.stringify(backupData, null, 2);
+                const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+                
+                // Create download link
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                
+                // Create filename with timestamp
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                link.setAttribute('download', `wallet-backup-${timestamp}.json`);
+                
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus(`Wallet backup created successfully (${portfolio.length} holdings, ${transactions.length} transactions)`, 'success');
+                console.log('💾 Wallet backup created:', backupData);
+            } catch (error) {
+                console.error('Error creating wallet backup:', error);
+                showStatus('Error creating backup: ' + error.message, 'error');
+            }
+        }
+
+        function restoreWalletData() {
+            // Trigger file input click
+            document.getElementById('restoreFileInput').click();
+        }
+
+        let pendingRestoreData = null; // Store backup data for confirmation
+
+        function handleRestoreFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+                showStatus('Please select a valid JSON backup file', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonString = e.target.result;
+                    if (!jsonString || jsonString.trim() === '') {
+                        showStatus('Backup file is empty', 'error');
+                        return;
+                    }
+                    
+                    const backupData = JSON.parse(jsonString);
+                    console.log('📄 Parsed backup data:', backupData);
+                    
+                    // Validate backup data structure
+                    if (!backupData || typeof backupData !== 'object') {
+                        showStatus('Invalid backup file format - not a valid object', 'error');
+                        return;
+                    }
+                    
+                    if (!backupData.hasOwnProperty('portfolio') || !backupData.hasOwnProperty('transactions')) {
+                        showStatus('Invalid backup file format - missing required fields (portfolio, transactions)', 'error');
+                        return;
+                    }
+                    
+                    // Store backup data and show custom confirmation modal
+                    pendingRestoreData = backupData;
+                    showRestoreConfirmModal(backupData);
+                    
+                } catch (error) {
+                    console.error('Error reading backup file:', error);
+                    showStatus('Error reading backup file: ' + error.message, 'error');
+                }
+            };
+            
+            reader.onerror = function(error) {
+                console.error('FileReader error:', error);
+                showStatus('Error reading file: ' + error.message, 'error');
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+
+        function showRestoreConfirmModal(backupData) {
+            // Populate backup info
+            const backupInfo = document.getElementById('restoreBackupInfo');
+            const backupDate = backupData.timestamp ? new Date(backupData.timestamp).toLocaleString() : 'Unknown';
+            
+            backupInfo.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>📈 Portfolio Holdings:</span>
+                    <strong>${backupData.portfolio.length} items</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>📊 Transaction Records:</span>
+                    <strong>${backupData.transactions.length} transactions</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>📅 Backup Created:</span>
+                    <strong>${backupDate}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>📋 Backup Version:</span>
+                    <strong>${backupData.version || 'Unknown'}</strong>
+                </div>
+            `;
+            
+            // Populate current info
+            const currentInfo = document.getElementById('restoreCurrentInfo');
+            currentInfo.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>📈 Current Portfolio:</span>
+                    <strong>${portfolio.length} items</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>📊 Current Transactions:</span>
+                    <strong>${transactions.length} transactions</strong>
+                </div>
+            `;
+            
+            // Show modal
+            document.getElementById('restoreConfirmModal').style.display = 'flex';
+        }
+
+        function hideRestoreConfirmModal() {
+            document.getElementById('restoreConfirmModal').style.display = 'none';
+            pendingRestoreData = null;
+        }
+
+        function confirmRestore() {
+            if (pendingRestoreData) {
+                const backupData = pendingRestoreData; // Store reference before clearing
+                hideRestoreConfirmModal();
+                restoreWalletFromBackup(backupData); // Use stored reference
+            }
+        }
+
+        function restoreWalletFromBackup(backupData) {
+            try {
+                // Validate backup data
+                if (!backupData) {
+                    throw new Error('Backup data is null or undefined');
+                }
+                
+                if (typeof backupData !== 'object') {
+                    throw new Error('Invalid backup data format');
+                }
+                
+                console.log('🔄 Starting wallet restore with data:', backupData);
+                
+                // Restore portfolio data
+                portfolio = Array.isArray(backupData.portfolio) ? backupData.portfolio : [];
+                filteredPortfolio = [...portfolio];
+                
+                // Restore transactions data
+                transactions = Array.isArray(backupData.transactions) ? backupData.transactions : [];
+                
+                // Save restored data to localStorage
+                savePortfolio();
+                saveTransactions();
+                
+                // Update displays
+                displayPortfolio();
+                displayTransactionHistory();
+                updatePortfolioSummary();
+                
+                // Update filtered data if there's a search active
+                if (currentWalletSearchTerm) {
+                    filterPortfolio();
+                }
+                
+                showStatus(`Wallet restored successfully (${portfolio.length} holdings, ${transactions.length} transactions)`, 'success');
+                console.log('📥 Wallet restored from backup:', backupData);
+                
+                // Log restore details
+                console.log(`📊 Restored ${portfolio.length} portfolio items`);
+                console.log(`📊 Restored ${transactions.length} transactions`);
+                
+            } catch (error) {
+                console.error('Error restoring wallet:', error);
+                showStatus('Error restoring wallet: ' + error.message, 'error');
+            }
+        }
+
+        // Legacy function for backward compatibility (if needed elsewhere)
         function exportData() {
             const csvContent = convertToCSV(filteredStocks);
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -3527,14 +3982,33 @@
                     clearInterval(window.refreshIntervalId);
                 }
                 
-                // Set new interval
-                window.refreshIntervalId = setInterval(() => {
+                // Set new interval - but check market status first
+                window.refreshIntervalId = setInterval(async () => {
+                    // Check if auto-update is enabled
+                    const settings = await ipcRenderer.invoke('get-settings');
+                    if (!settings.autoUpdateEnabled) {
+                        console.log('🔄 Auto-update is disabled - skipping refresh');
+                        return;
+                    }
+                    
+                    // Check market status before auto-refreshing
+                    if (currentMarketStatus && currentMarketStatus.status === 'closed') {
+                        console.log('🔴 Market is closed - skipping auto refresh');
+                        return;
+                    }
+                    
                     refreshQueriesAndData();
                 }, interval);
             } catch (error) {
                 console.error('Error loading refresh interval:', error);
                 // Fallback to 30 seconds
-                window.refreshIntervalId = setInterval(() => {
+                window.refreshIntervalId = setInterval(async () => {
+                    // Check market status before auto-refreshing
+                    if (currentMarketStatus && currentMarketStatus.status === 'closed') {
+                        console.log('🔴 Market is closed - skipping auto refresh (fallback)');
+                        return;
+                    }
+                    
                     refreshQueriesAndData();
                 }, 30000);
             }
@@ -3610,6 +4084,38 @@
 
         // Listen for real-time updates from main process
         ipcRenderer.on('stock-data-updated', (event, data) => {
+            // Check if we have mock data (2 records)
+            if (data && data.length === 2) {
+                console.log('⚠️ Mock data detected in stock-data-updated (2 records)');
+                
+                // If we're in startup phase, trigger retry logic
+                if (isStartupPhase && allStocks.length === 0) {
+                    startupRetryCount++;
+                    console.log(`🔄 Startup phase - mock data retry ${startupRetryCount} (will keep trying until success)`);
+                    console.log(`🔄 Retrying startup data load in 3 seconds...`);
+                    
+                    if (startupRetryTimer) clearTimeout(startupRetryTimer);
+                    startupRetryTimer = setTimeout(() => {
+                        startupDataLoad();
+                    }, 3000);
+                    return;
+                } else {
+                    // Not in startup phase or have existing data - just show warning
+                    console.log('📊 Not in startup phase - keeping existing data');
+                    updateRecordCounter();
+                    return;
+                }
+            }
+            
+            // Normal data - update as usual
+            console.log(`✅ Real data received: ${data.length} records`);
+            if (isStartupPhase) {
+                console.log('🎯 Startup phase completed successfully');
+                isStartupPhase = false;
+                startupRetryCount = 0;
+                if (startupRetryTimer) clearTimeout(startupRetryTimer);
+            }
+            
             allStocks = data;
             
             // Update watchlist with fresh data
@@ -3675,6 +4181,7 @@
         // Handle market status updates
         ipcRenderer.on('market-status-updated', (event, data) => {
             console.log('Market status updated:', data);
+            currentMarketStatus = data; // Store the current market status
             updateMarketStatusIndicator(data);
         });
         
@@ -3776,6 +4283,9 @@
         function updateMarketStatusIndicator(data) {
             const marketStatusElement = document.getElementById('marketStatus');
             if (!marketStatusElement) return;
+
+            // Store the market status globally
+            currentMarketStatus = data;
 
             // Remove all existing classes
             marketStatusElement.className = 'market-status-indicator';
@@ -4410,7 +4920,7 @@
         align-items: center;
         justify-content: center;
     ">
-        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.8.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.9.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
     </footer>
 </body>
 </html>
