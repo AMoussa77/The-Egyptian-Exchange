@@ -157,12 +157,149 @@
             box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
         }
 
+        .btn-wallet {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+        }
+
+        .btn-wallet:hover {
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+        }
+
         .btn-remove {
             background: linear-gradient(45deg, #95a5a6, #7f8c8d);
         }
 
         .btn-remove:hover {
             box-shadow: 0 6px 20px rgba(149, 165, 166, 0.4);
+        }
+
+        /* Wallet Styles */
+        .wallet-header {
+            margin-bottom: 20px;
+        }
+
+        .portfolio-summary {
+            flex: 1;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(39, 174, 96, 0.1));
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .summary-card h3 {
+            margin: 0 0 15px 0;
+            color: #2ecc71;
+            font-size: 1.2em;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #b0b0b0;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .stat-value.positive {
+            color: #2ecc71;
+        }
+
+        .stat-value.negative {
+            color: #e74c3c;
+        }
+
+        .add-stock-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: #b0b0b0;
+        }
+
+        .stock-info {
+            background: rgba(74, 144, 226, 0.1);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .stock-info h4 {
+            margin: 0 0 10px 0;
+            color: #4a90e2;
+            font-size: 1em;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .info-label {
+            color: #b0b0b0;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .info-value.positive {
+            color: #2ecc71;
+        }
+
+        .info-value.negative {
+            color: #e74c3c;
         }
 
         .tabs {
@@ -933,6 +1070,7 @@
         <div class="tabs">
             <button class="tab active" onclick="switchTab('all-stocks')">📈 All Stocks</button>
             <button class="tab" onclick="switchTab('watchlist')">⭐ Watchlist</button>
+            <button class="tab" onclick="switchTab('wallet')">💰 Wallet</button>
         </div>
 
         <!-- All Stocks Tab -->
@@ -986,6 +1124,106 @@
                         <p>Add stocks from the "All Stocks" tab to start watching!</p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Wallet Tab -->
+        <div id="wallet" class="tab-content">
+            <div class="wallet-header">
+                <div style="margin-bottom: 20px;">
+                    <h2 style="color: white; margin: 0;">💰 Portfolio</h2>
+                </div>
+                <div class="portfolio-summary">
+                    <div class="summary-card">
+                        <h3>💰 Portfolio Summary</h3>
+                        <div class="summary-stats">
+                            <div class="stat">
+                                <span class="stat-label">Total Investment:</span>
+                                <span id="totalInvestment" class="stat-value">EGP 0.00</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Current Value:</span>
+                                <span id="currentValue" class="stat-value">EGP 0.00</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Total P&L:</span>
+                                <span id="totalPnL" class="stat-value">EGP 0.00</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">P&L %:</span>
+                                <span id="totalPnLPercent" class="stat-value">0.00%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All-Time Investment Summary -->
+                <div class="portfolio-summary" style="margin-top: 20px;">
+                    <div class="summary-card">
+                        <h3>📊 All-Time Investment Summary</h3>
+                        <div class="summary-stats">
+                            <div class="stat">
+                                <span class="stat-label">All-Time Investment:</span>
+                                <span id="allTimeInvestment" class="stat-value">EGP 0.00</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">All-Time Sales:</span>
+                                <span id="allTimeSales" class="stat-value">EGP 0.00</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Net Investment:</span>
+                                <span id="netInvestment" class="stat-value">EGP 0.00</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">All-Time P&L:</span>
+                                <span id="allTimePnL" class="stat-value">EGP 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="walletSearchInput" class="search-input" placeholder="Search portfolio..." onkeyup="filterPortfolio()">
+            </div>
+
+            <div class="stocks-table">
+                <div class="table-header">
+                    💰 My Portfolio
+                </div>
+                <div class="table-container">
+                    <div id="walletLoading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        Loading portfolio...
+                    </div>
+                    <table id="walletTable" style="display: none;">
+                        <thead>
+                            <tr id="walletHeaders">
+                                <th>Stock Name</th>
+                                <th>Shares</th>
+                                <th>Total Buy Price</th>
+                                <th>Current Price</th>
+                                <th>Current Value</th>
+                                <th>P&L</th>
+                                <th>P&L %</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="walletTableBody"></tbody>
+                    </table>
+                    <div id="emptyWallet" class="loading">
+                        <p>💰 Your portfolio is empty</p>
+                        <p>Add stocks to start tracking your investments!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction History Button -->
+            <div style="margin-top: 30px; text-align: center;">
+                <button class="btn" onclick="showTransactionHistoryModal()" style="background: linear-gradient(135deg, #3498db, #2980b9); border: 1px solid #3498db; padding: 15px 30px; font-size: 16px;">
+                    📊 View Transaction History
+                </button>
             </div>
         </div>
         
@@ -1158,7 +1396,222 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.7.1</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.8.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Stock to Portfolio Modal -->
+    <div id="addStockModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ Add Stock to Portfolio</h3>
+                <button class="btn btn-small" onclick="hideAddStockModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="stockSelect">Select Stock:</label>
+                    <select id="stockSelect" class="form-input" onchange="updateStockInfo()">
+                        <option value="">Choose a stock...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sharesInput">Number of Shares:</label>
+                    <input type="number" id="sharesInput" class="form-input" placeholder="Enter number of shares" min="1" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="buyPriceInput">Buy Price (EGP):</label>
+                    <input type="number" id="buyPriceInput" class="form-input" placeholder="Enter your desired buy price per share" min="0" step="any">
+                </div>
+                <div class="form-group">
+                    <label for="buyDateInput">Buy Date:</label>
+                    <input type="date" id="buyDateInput" class="form-input">
+                </div>
+                <div class="stock-info" id="stockInfo" style="display: none;">
+                    <h4>Stock Information:</h4>
+                    <div class="info-item">
+                        <span class="info-label">Current Price:</span>
+                        <span id="currentPriceDisplay" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Change:</span>
+                        <span id="changeDisplay" class="info-value">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="addStockToPortfolio()">➕ Add to Portfolio</button>
+                <button class="btn btn-secondary" onclick="hideAddStockModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Stock Modal -->
+    <div id="buyStockModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Buy Stock</h3>
+                <button class="btn btn-small" onclick="hideBuyStockModal()">✕</button>
+            </div>
+            <div id="buyModalValidation" class="modal-validation" style="display: none; padding: 10px; margin: 10px 20px; border-radius: 5px; background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; color: #e74c3c; font-size: 14px;"></div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="buyStockName">Stock:</label>
+                    <input type="text" id="buyStockName" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="buySharesInput">Number of Shares:</label>
+                    <input type="number" id="buySharesInput" class="form-input" placeholder="Enter number of shares" min="1" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="buyModalPriceInput">Buy Price (EGP):</label>
+                    <input type="number" id="buyModalPriceInput" class="form-input" placeholder="Enter your desired buy price per share" min="0" step="any">
+                </div>
+                <div class="form-group">
+                    <label for="buyModalDateInput">Buy Date:</label>
+                    <input type="date" id="buyModalDateInput" class="form-input">
+                </div>
+                <div class="stock-info" id="buyStockInfo" style="display: none;">
+                    <h4>Current Stock Information:</h4>
+                    <div class="info-item">
+                        <span class="info-label">Current Price:</span>
+                        <span id="buyCurrentPriceDisplay" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Change:</span>
+                        <span id="buyChangeDisplay" class="info-value">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="confirmBuyStock()">💰 Buy Stock</button>
+                <button class="btn btn-secondary" onclick="hideBuyStockModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sell Stock Modal -->
+    <div id="sellStockModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💸 Sell Stock</h3>
+                <button class="btn btn-small" onclick="hideSellStockModal()">✕</button>
+            </div>
+            <div id="sellModalValidation" class="modal-validation" style="display: none; padding: 10px; margin: 10px 20px; border-radius: 5px; background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; color: #e74c3c; font-size: 14px;"></div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="sellStockName">Stock:</label>
+                    <input type="text" id="sellStockName" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="sellSharesInput">Number of Shares to Sell:</label>
+                    <input type="number" id="sellSharesInput" class="form-input" placeholder="Enter number of shares" min="1" step="1">
+                    <small style="color: #b0b0b0;">Max: <span id="sellMaxShares">0</span> shares</small>
+                </div>
+                <div class="form-group">
+                    <label for="sellPriceInput">Sell Price (EGP):</label>
+                    <input type="number" id="sellPriceInput" class="form-input" placeholder="Enter sell price per share" min="0" step="any">
+                </div>
+                <div class="form-group">
+                    <label for="sellDateInput">Sell Date:</label>
+                    <input type="date" id="sellDateInput" class="form-input">
+                </div>
+                <div class="stock-info" id="sellStockInfo" style="display: none;">
+                    <h4>Current Stock Information:</h4>
+                    <div class="info-item">
+                        <span class="info-label">Current Price:</span>
+                        <span id="sellCurrentPriceDisplay" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Change:</span>
+                        <span id="sellChangeDisplay" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Your Shares:</span>
+                        <span id="sellYourSharesDisplay" class="info-value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Average Buy Price:</span>
+                        <span id="sellAvgPriceDisplay" class="info-value">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-watchlist" onclick="confirmSellStock()">💸 Sell Stock</button>
+                <button class="btn btn-secondary" onclick="hideSellStockModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History Modal -->
+    <div id="transactionHistoryModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>📊 Transaction History</h3>
+                <button class="btn btn-small" onclick="hideTransactionHistoryModal()">✕</button>
+            </div>
+            <div id="transactionModalValidation" class="modal-validation" style="display: none; padding: 10px; margin: 10px 20px; border-radius: 5px; background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; color: #27ae60; font-size: 14px;"></div>
+            <div class="modal-body" style="padding: 0;">
+                <div style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h4 style="color: #e0e0e0; margin: 0;">All Transactions</h4>
+                    <button class="btn btn-secondary" onclick="clearTransactionHistoryModal()" style="background: rgba(231, 76, 60, 0.8); border: 1px solid #e74c3c;">
+                        🗑️ Clear All
+                    </button>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto; padding: 20px;">
+                    <div id="modalTransactionLoading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        Loading transaction history...
+                    </div>
+                    <table id="modalTransactionTable" style="display: none; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Stock</th>
+                                <th>Type</th>
+                                <th>Shares</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalTransactionTableBody"></tbody>
+                    </table>
+                    <div id="modalEmptyTransactions" class="loading">
+                        <p>📊 No transaction history</p>
+                        <p>Buy or sell stocks to see your transaction history!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Transaction Confirmation Modal -->
+    <div id="clearTransactionConfirmModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 450px; animation: modalSlideIn 0.3s ease-out;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                <h3 style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">⚠️</span>
+                    Clear Transaction History
+                </h3>
+                <button class="btn btn-small" onclick="hideClearTransactionConfirmModal()">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 30px 20px;">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🗑️</div>
+                    <h4 style="color: #e0e0e0; margin-bottom: 15px;">Are you sure?</h4>
+                    <p style="color: #b0b0b0; line-height: 1.6; margin: 0;">
+                        This will permanently delete all your transaction history. 
+                        <br><strong style="color: #e74c3c;">This action cannot be undone.</strong>
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 15px 20px; display: flex; gap: 10px; justify-content: flex-end; background: rgba(20, 20, 40, 0.3);">
+                <button class="btn btn-secondary" onclick="hideClearTransactionConfirmModal()" style="background: rgba(108, 117, 125, 0.8); border: 1px solid #6c757d;">
+                    Cancel
+                </button>
+                <button class="btn" onclick="confirmClearTransactionHistory()" style="background: linear-gradient(135deg, #e74c3c, #c0392b); border: 1px solid #e74c3c;">
+                    🗑️ Clear All
+                </button>
             </div>
         </div>
     </div>
@@ -1169,8 +1622,12 @@
         let filteredStocks = [];
         let watchlist = [];
         let filteredWatchlist = [];
+        let portfolio = [];
+        let filteredPortfolio = [];
+        let transactions = [];
         let currentSearchTerm = '';
         let currentWatchlistSearchTerm = '';
+        let currentWalletSearchTerm = '';
         let currentSortColumn = '';
         let currentSortDirection = '';
         let watchlistSortColumn = '';
@@ -1182,6 +1639,7 @@
         window.addEventListener('DOMContentLoaded', async () => {
             loadColumnVisibility();
             loadWatchlist();
+            loadPortfolio();
             loadAppVersion();
             startAutoRefresh();
             setupVolumeSlider();
@@ -1309,6 +1767,146 @@
                 sendWatchlistToWidget(); // Send to widget when watchlist is saved
             } catch (error) {
                 console.error('Error saving watchlist:', error);
+            }
+        }
+
+        function validateAndFixPortfolioData(portfolioData) {
+            console.log('🔍 Validating portfolio data...');
+            
+            return portfolioData.map(item => {
+                console.log(`🔍 Validating item: ${item.stockName}`, item);
+                
+                // Ensure buyPrice is a number and not corrupted
+                if (typeof item.buyPrice !== 'number' || item.buyPrice <= 0) {
+                    console.warn(`⚠️ Invalid buyPrice for ${item.stockName}: ${item.buyPrice}, setting to 0`);
+                    item.buyPrice = 0;
+                }
+                
+                // Ensure shares is a number
+                if (typeof item.shares !== 'number' || item.shares <= 0) {
+                    console.warn(`⚠️ Invalid shares for ${item.stockName}: ${item.shares}, setting to 0`);
+                    item.shares = 0;
+                }
+                
+                // Log the calculation that will be used
+                const totalBuyPrice = item.shares * item.buyPrice;
+                console.log(`✅ ${item.stockName}: ${item.shares} shares × ${item.buyPrice} = ${totalBuyPrice.toFixed(2)} EGP`);
+                
+                return item;
+            });
+        }
+
+        function clearPortfolioData() {
+            if (confirm('Are you sure you want to clear all portfolio data? This cannot be undone.')) {
+                portfolio = [];
+                filteredPortfolio = [];
+                transactions = [];
+                localStorage.removeItem('egyptianStocksPortfolio');
+                localStorage.removeItem('egyptianStocksTransactions');
+                displayPortfolio();
+                displayTransactionHistory();
+                updatePortfolioSummary();
+                showStatus('Portfolio data cleared', 'success');
+                console.log('🗑️ Portfolio data cleared');
+            }
+        }
+
+        function testBuyPriceCalculation() {
+            console.log('🧪 Testing buy price calculation...');
+            
+            // Create a test portfolio item
+            const testItem = {
+                stockName: 'TEST_STOCK',
+                shares: 5,
+                buyPrice: 2.0,
+                buyDate: '2024-01-01'
+            };
+            
+            console.log('Test item:', testItem);
+            console.log('Expected Total Buy Price: 5 × 2.0 = 10.0');
+            console.log('Calculated Total Buy Price:', testItem.shares * testItem.buyPrice);
+            
+            // Test with the actual portfolio if it exists
+            if (portfolio.length > 0) {
+                console.log('🔍 Testing with actual portfolio data:');
+                portfolio.forEach((item, index) => {
+                    console.log(`Item ${index + 1}: ${item.stockName}`);
+                    console.log(`  shares: ${item.shares} (type: ${typeof item.shares})`);
+                    console.log(`  buyPrice: ${item.buyPrice} (type: ${typeof item.buyPrice})`);
+                    console.log(`  calculated total: ${item.shares * item.buyPrice}`);
+                    console.log('  ---');
+                });
+            }
+            
+            // Check what's in localStorage
+            const savedData = localStorage.getItem('egyptianStocksPortfolio');
+            if (savedData) {
+                console.log('📁 Raw data in localStorage:', savedData);
+                try {
+                    const parsed = JSON.parse(savedData);
+                    console.log('📁 Parsed data:', parsed);
+                } catch (e) {
+                    console.error('📁 Error parsing localStorage data:', e);
+                }
+            }
+        }
+
+        function loadPortfolio() {
+            const savedPortfolio = localStorage.getItem('egyptianStocksPortfolio');
+            const savedTransactions = localStorage.getItem('egyptianStocksTransactions');
+            
+            if (savedPortfolio) {
+                try {
+                    portfolio = JSON.parse(savedPortfolio);
+                    
+                    // Validate and fix portfolio data
+                    portfolio = validateAndFixPortfolioData(portfolio);
+                    
+                    filteredPortfolio = [...portfolio];
+                    console.log('Portfolio loaded:', portfolio.length, 'stocks');
+                    console.log('Portfolio data:', portfolio);
+                    updatePortfolioSummary();
+                    displayPortfolio();
+                } catch (error) {
+                    console.error('Error loading portfolio:', error);
+                    portfolio = [];
+                    filteredPortfolio = [];
+                }
+            } else {
+                portfolio = [];
+                filteredPortfolio = [];
+            }
+            
+            // Load transactions
+            if (savedTransactions) {
+                try {
+                    transactions = JSON.parse(savedTransactions);
+                    displayTransactionHistory();
+                    console.log('Transactions loaded:', transactions.length, 'transactions');
+                } catch (error) {
+                    console.error('Error loading transactions:', error);
+                    transactions = [];
+                }
+            } else {
+                transactions = [];
+            }
+        }
+
+        function savePortfolio() {
+            try {
+                localStorage.setItem('egyptianStocksPortfolio', JSON.stringify(portfolio));
+                console.log('Portfolio saved:', portfolio.length, 'stocks');
+            } catch (error) {
+                console.error('Error saving portfolio:', error);
+            }
+        }
+
+        function saveTransactions() {
+            try {
+                localStorage.setItem('egyptianStocksTransactions', JSON.stringify(transactions));
+                console.log('Transactions saved:', transactions.length, 'transactions');
+            } catch (error) {
+                console.error('Error saving transactions:', error);
             }
         }
 
@@ -1602,13 +2200,21 @@
                     return `<td class="${className}">${displayValue}</td>`;
                 }).join('');
                 
-                // Check if stock is already in watchlist
+                // Check if stock is already in watchlist and portfolio
                 const isInWatchlist = watchlist.some(w => JSON.stringify(w) === JSON.stringify(stock));
-                const actionButton = isInWatchlist 
-                    ? `<button class="btn btn-small btn-remove" onclick="removeFromWatchlistByIndex(${index})">Remove</button>`
-                    : `<button class="btn btn-small btn-watchlist" onclick="addToWatchlistByIndex(${index})">Add</button>`;
+                const stockName = stock['الإسم_المختصر'] || stock['Short Name'] || 'Unknown';
+                const isInPortfolio = portfolio.some(p => p.stockName === stockName);
                 
-                return `<tr>${row}<td>${actionButton}</td></tr>`;
+                // Create action buttons
+                const watchlistButton = isInWatchlist 
+                    ? `<button class="btn btn-small btn-remove" onclick="removeFromWatchlistByIndex(${index})" title="Remove from Watchlist">⭐</button>`
+                    : `<button class="btn btn-small btn-watchlist" onclick="addToWatchlistByIndex(${index})" title="Add to Watchlist">⭐</button>`;
+                
+                const portfolioButton = `<button class="btn btn-small btn-wallet" onclick="addToPortfolioByIndex(${index})" title="Buy Stock">💰</button>`;
+                
+                const actionButtons = `<div style="display: flex; gap: 5px; justify-content: center;">${watchlistButton}${portfolioButton}</div>`;
+                
+                return `<tr>${row}<td>${actionButtons}</td></tr>`;
             }).join('');
 
             loading.style.display = 'none';
@@ -1714,6 +2320,183 @@
             displayWatchlist();
         }
 
+        function displayPortfolio() {
+            const table = document.getElementById('walletTable');
+            const tableBody = document.getElementById('walletTableBody');
+            const emptyWallet = document.getElementById('emptyWallet');
+
+            if (filteredPortfolio.length === 0) {
+                emptyWallet.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            emptyWallet.style.display = 'none';
+            
+            // Calculate portfolio values with current prices
+            const portfolioWithValues = filteredPortfolio.map(portfolioItem => {
+                const currentStock = allStocks.find(stock => 
+                    stock['الإسم_المختصر'] === portfolioItem.stockName || 
+                    stock['Short Name'] === portfolioItem.stockName
+                );
+                
+                const currentPrice = currentStock ? 
+                    (currentStock['أخر_سعر'] || currentStock['Last Price'] || portfolioItem.buyPrice) : 
+                    portfolioItem.buyPrice;
+                
+                const investment = portfolioItem.shares * portfolioItem.buyPrice;
+                console.log(`🔍 Portfolio item ${portfolioItem.stockName}:`);
+                console.log(`   - shares: ${portfolioItem.shares}`);
+                console.log(`   - buyPrice: ${portfolioItem.buyPrice}`);
+                console.log(`   - investment (shares × buyPrice): ${investment}`);
+                console.log(`   - currentPrice: ${currentPrice}`);
+                console.log(`   - Total Buy Price will show: ${(portfolioItem.shares * portfolioItem.buyPrice).toFixed(2)}`);
+                const currentValue = portfolioItem.shares * currentPrice;
+                const pnl = currentValue - investment;
+                const pnlPercent = investment > 0 ? (pnl / investment) * 100 : 0;
+                
+                return {
+                    ...portfolioItem,
+                    currentPrice,
+                    investment,
+                    currentValue,
+                    pnl,
+                    pnlPercent
+                };
+            });
+
+            tableBody.innerHTML = portfolioWithValues.map((item, index) => {
+                const pnlClass = item.pnl >= 0 ? 'positive' : 'negative';
+                const pnlSign = item.pnl >= 0 ? '+' : '';
+                
+                return `
+                    <tr>
+                        <td>${item.stockName}</td>
+                        <td>${item.shares}</td>
+                        <td>EGP ${(item.shares * item.buyPrice).toFixed(2)}</td>
+                        <td>EGP ${item.currentPrice.toFixed(2)}</td>
+                        <td>EGP ${item.currentValue.toFixed(2)}</td>
+                        <td class="${pnlClass}">${pnlSign}EGP ${item.pnl.toFixed(2)}</td>
+                        <td class="${pnlClass}">${pnlSign}${item.pnlPercent.toFixed(2)}%</td>
+                        <td>
+                            <div style="display: flex; gap: 5px; justify-content: center;">
+                                <button class="btn btn-small btn-watchlist" onclick="showSellStockModal('${item.stockName}', ${item.shares}, ${item.buyPrice})" title="Sell Stock">💸</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            table.style.display = 'table';
+            updatePortfolioSummary();
+        }
+
+        function filterPortfolio() {
+            const searchTerm = document.getElementById('walletSearchInput').value.toLowerCase();
+            currentWalletSearchTerm = searchTerm;
+            filteredPortfolio = portfolio.filter(item => {
+                return item.stockName.toLowerCase().includes(searchTerm);
+            });
+            
+            displayPortfolio();
+        }
+
+        function updatePortfolioSummary() {
+            let totalInvestment = 0;
+            let totalCurrentValue = 0;
+            
+            console.log('🔄 Updating portfolio summary...');
+            console.log('📊 Portfolio items:', portfolio.length);
+            console.log('📊 Available stock data:', allStocks.length);
+            
+            portfolio.forEach(item => {
+                const currentStock = allStocks.find(stock => 
+                    stock['الإسم_المختصر'] === item.stockName || 
+                    stock['Short Name'] === item.stockName
+                );
+                
+                const currentPrice = currentStock ? 
+                    (currentStock['أخر_سعر'] || currentStock['Last Price'] || item.buyPrice) : 
+                    item.buyPrice;
+                
+                const itemInvestment = item.shares * item.buyPrice;
+                const itemCurrentValue = item.shares * currentPrice;
+                
+                totalInvestment += itemInvestment;
+                totalCurrentValue += itemCurrentValue;
+                
+                console.log(`📈 ${item.stockName}: ${item.shares} shares @ ${item.buyPrice} = ${itemInvestment.toFixed(2)} | Current: ${currentPrice} = ${itemCurrentValue.toFixed(2)}`);
+            });
+            
+            const totalPnL = totalCurrentValue - totalInvestment;
+            const totalPnLPercent = totalInvestment > 0 ? (totalPnL / totalInvestment) * 100 : 0;
+            
+            const pnlClass = totalPnL >= 0 ? 'positive' : 'negative';
+            const pnlSign = totalPnL >= 0 ? '+' : '';
+            
+            console.log(`💰 Summary: Investment: ${totalInvestment.toFixed(2)}, Current: ${totalCurrentValue.toFixed(2)}, P&L: ${totalPnL.toFixed(2)} (${totalPnLPercent.toFixed(2)}%)`);
+            
+            document.getElementById('totalInvestment').textContent = `EGP ${totalInvestment.toFixed(2)}`;
+            document.getElementById('currentValue').textContent = `EGP ${totalCurrentValue.toFixed(2)}`;
+            document.getElementById('totalPnL').textContent = `${pnlSign}EGP ${totalPnL.toFixed(2)}`;
+            document.getElementById('totalPnL').className = `stat-value ${pnlClass}`;
+            document.getElementById('totalPnLPercent').textContent = `${pnlSign}${totalPnLPercent.toFixed(2)}%`;
+            document.getElementById('totalPnLPercent').className = `stat-value ${pnlClass}`;
+            
+            // Also update all-time investment summary
+            updateAllTimeInvestmentSummary();
+        }
+
+        function updateAllTimeInvestmentSummary() {
+            let allTimeInvestment = 0;
+            let allTimeSales = 0;
+            
+            console.log('🔄 Updating all-time investment summary...');
+            console.log('📊 Total transactions:', transactions.length);
+            
+            transactions.forEach(transaction => {
+                if (transaction.type === 'BUY') {
+                    allTimeInvestment += transaction.total;
+                    console.log(`💰 Buy: ${transaction.stockName} - ${transaction.shares} shares @ ${transaction.price} = ${transaction.total.toFixed(2)}`);
+                } else if (transaction.type === 'SELL') {
+                    allTimeSales += transaction.total;
+                    console.log(`💸 Sell: ${transaction.stockName} - ${transaction.shares} shares @ ${transaction.price} = ${transaction.total.toFixed(2)}`);
+                }
+            });
+            
+            // Calculate current portfolio value (this IS the net investment)
+            let currentPortfolioValue = 0;
+            portfolio.forEach(item => {
+                const currentStock = allStocks.find(stock => 
+                    stock['الإسم_المختصر'] === item.stockName || 
+                    stock['Short Name'] === item.stockName
+                );
+                
+                const currentPrice = currentStock ? 
+                    (currentStock['أخر_سعر'] || currentStock['Last Price'] || item.buyPrice) : 
+                    item.buyPrice;
+
+                currentPortfolioValue += item.shares * currentPrice;
+            });
+
+            // Net Investment = Current value of remaining holdings
+            const netInvestment = currentPortfolioValue;
+
+            // Calculate all-time P&L: Current portfolio value + sales proceeds - total investment
+            const allTimePnL = (currentPortfolioValue + allTimeSales) - allTimeInvestment;
+            
+            const pnlClass = allTimePnL >= 0 ? 'positive' : 'negative';
+            const pnlSign = allTimePnL >= 0 ? '+' : '';
+            
+            console.log(`📊 All-Time Summary: Investment: ${allTimeInvestment.toFixed(2)}, Sales: ${allTimeSales.toFixed(2)}, Net: ${netInvestment.toFixed(2)}, P&L: ${allTimePnL.toFixed(2)}`);
+            
+            document.getElementById('allTimeInvestment').textContent = `EGP ${allTimeInvestment.toFixed(2)}`;
+            document.getElementById('allTimeSales').textContent = `EGP ${allTimeSales.toFixed(2)}`;
+            document.getElementById('netInvestment').textContent = `EGP ${netInvestment.toFixed(2)}`;
+            document.getElementById('allTimePnL').textContent = `${pnlSign}EGP ${allTimePnL.toFixed(2)}`;
+            document.getElementById('allTimePnL').className = `stat-value ${pnlClass}`;
+        }
+
         function addToWatchlistByIndex(index) {
             try {
                 const stock = filteredStocks[index];
@@ -1805,11 +2588,791 @@
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
 
-            // Refresh watchlist when switching to it
+            // Refresh data when switching to tabs
             if (tabName === 'watchlist') {
                 loadWatchlist();
+            } else if (tabName === 'wallet') {
+                loadPortfolio();
+                updatePortfolioSummary(); // Ensure summary is up to date (this will also call updateAllTimeInvestmentSummary)
             }
         }
+
+        function showAddStockModal() {
+            populateStockSelect();
+            document.getElementById('addStockModal').style.display = 'flex';
+            // Set default date to today
+            document.getElementById('buyDateInput').value = new Date().toISOString().split('T')[0];
+        }
+
+        function hideAddStockModal() {
+            document.getElementById('addStockModal').style.display = 'none';
+            // Clear form
+            document.getElementById('stockSelect').value = '';
+            document.getElementById('sharesInput').value = '';
+            document.getElementById('buyPriceInput').value = '';
+            document.getElementById('buyDateInput').value = '';
+            document.getElementById('stockInfo').style.display = 'none';
+        }
+
+        function populateStockSelect() {
+            const select = document.getElementById('stockSelect');
+            select.innerHTML = '<option value="">Choose a stock...</option>';
+            
+            allStocks.forEach(stock => {
+                const stockName = stock['الإسم_المختصر'] || stock['Short Name'] || 'Unknown';
+                const option = document.createElement('option');
+                option.value = stockName;
+                option.textContent = stockName;
+                select.appendChild(option);
+            });
+        }
+
+        function updateStockInfo() {
+            const selectedStock = document.getElementById('stockSelect').value;
+            const stockInfo = document.getElementById('stockInfo');
+            
+            if (!selectedStock) {
+                stockInfo.style.display = 'none';
+                return;
+            }
+            
+            const stock = allStocks.find(s => 
+                (s['الإسم_المختصر'] || s['Short Name']) === selectedStock
+            );
+            
+            if (stock) {
+                const currentPrice = stock['أخر_سعر'] || stock['Last Price'] || 0;
+                const change = stock['%التغيير'] || stock['Changes %'] || 0;
+                
+                document.getElementById('currentPriceDisplay').textContent = `EGP ${currentPrice.toFixed(2)}`;
+                
+                const changeElement = document.getElementById('changeDisplay');
+                const changeClass = change >= 0 ? 'positive' : 'negative';
+                const changeSign = change >= 0 ? '+' : '';
+                changeElement.textContent = `${changeSign}${change.toFixed(2)}%`;
+                changeElement.className = `info-value ${changeClass}`;
+                
+                stockInfo.style.display = 'block';
+            } else {
+                stockInfo.style.display = 'none';
+            }
+        }
+
+        // Removed old addStockToPortfolio function - replaced by buy modal system
+
+        function removeMatchingBuyTransactions(stockName, shares, buyPrice) {
+            try {
+                console.log(`🔍 Looking for matching buy transactions for ${stockName}: ${shares} shares @ ${buyPrice}`);
+                console.log(`📊 Total transactions before filtering: ${transactions.length}`);
+                
+                // Get all buy transactions for this stock
+                const buyTransactionsForStock = transactions.filter(transaction => 
+                    transaction.type === 'BUY' && transaction.stockName === stockName
+                );
+                
+                console.log(`📊 Found ${buyTransactionsForStock.length} buy transactions for ${stockName}`);
+                
+                if (buyTransactionsForStock.length === 0) {
+                    console.log(`⚠️ No buy transactions found for ${stockName}`);
+                    return;
+                }
+                
+                // Find exact matching transactions (same shares and price)
+                const exactMatches = buyTransactionsForStock.filter(transaction => {
+                    const sameShares = transaction.shares === shares;
+                    const samePrice = Math.abs(transaction.price - buyPrice) < 0.01;
+                    return sameShares && samePrice;
+                });
+                
+                console.log(`📊 Found ${exactMatches.length} exact matching transactions`);
+                
+                if (exactMatches.length > 0) {
+                    // Remove only the exact matching transactions
+                    const originalLength = transactions.length;
+                    transactions = transactions.filter(transaction => {
+                        const isBuy = transaction.type === 'BUY';
+                        const sameStock = transaction.stockName === stockName;
+                        const sameShares = transaction.shares === shares;
+                        const samePrice = Math.abs(transaction.price - buyPrice) < 0.01;
+                        
+                        // Only remove if it's an exact match
+                        return !(isBuy && sameStock && sameShares && samePrice);
+                    });
+                    
+                    console.log(`🗑️ Removed ${originalLength - transactions.length} exact matching buy transactions`);
+                    console.log(`📊 Remaining transactions: ${transactions.length}`);
+                } else {
+                    console.log(`⚠️ No exact matching transactions found to remove`);
+                    console.log(`📊 Available buy transactions for ${stockName}:`, buyTransactionsForStock.map(t => ({
+                        shares: t.shares,
+                        price: t.price,
+                        total: t.total
+                    })));
+                }
+            } catch (error) {
+                console.error('Error removing matching buy transactions:', error);
+            }
+        }
+
+        function removeFromPortfolio(index) {
+            try {
+                const item = filteredPortfolio[index];
+                if (!item) {
+                    showStatus('Portfolio item not found', 'error');
+                    return;
+                }
+                
+                console.log(`🗑️ Removing portfolio item:`, {
+                    stockName: item.stockName,
+                    shares: item.shares,
+                    buyPrice: item.buyPrice
+                });
+                
+                // Remove matching buy transactions from history
+                removeMatchingBuyTransactions(item.stockName, item.shares, item.buyPrice);
+                
+                // Remove from main portfolio
+                portfolio = portfolio.filter(p => p.stockName !== item.stockName);
+                
+                // Update filtered portfolio
+                filteredPortfolio = filteredPortfolio.filter(p => p.stockName !== item.stockName);
+                
+                savePortfolio();
+                saveTransactions(); // Save updated transactions
+                displayPortfolio();
+                displayTransactionHistory(); // Refresh transaction history
+                
+                // Request fresh stock data and then update summary
+                ipcRenderer.invoke('get-stock-data').then(data => {
+                    if (data && data.length > 0) {
+                        allStocks = data;
+                        updatePortfolioSummary(); // Update summary with fresh data
+                    } else {
+                        updatePortfolioSummary(); // Update summary with existing data
+                    }
+                }).catch(error => {
+                    console.error('Error getting fresh stock data:', error);
+                    updatePortfolioSummary(); // Update summary with existing data
+                });
+                
+                showStatus('Stock removed from portfolio', 'success');
+            } catch (error) {
+                console.error('Error removing from portfolio:', error);
+                showStatus('Error removing from portfolio', 'error');
+            }
+        }
+
+        function addToPortfolioByIndex(index) {
+            try {
+                const stock = filteredStocks[index];
+                if (!stock) {
+                    showStatus('Stock not found', 'error');
+                    return;
+                }
+                
+                const stockName = stock['الإسم_المختصر'] || stock['Short Name'] || 'Unknown';
+                const currentPrice = stock['أخر_سعر'] || stock['Last Price'] || 0;
+                
+                // Always open buy modal - allows adding more shares to existing portfolio
+                showBuyStockModal(stockName, currentPrice, stock);
+            } catch (error) {
+                console.error('Error adding to portfolio:', error);
+                showStatus('Error adding to portfolio', 'error');
+            }
+        }
+
+        function removeFromPortfolioByStockName(stockName) {
+            try {
+                console.log(`🗑️ Removing portfolio item by stock name: ${stockName}`);
+                
+                // Find the portfolio item to get its details
+                const portfolioItem = portfolio.find(p => p.stockName === stockName);
+                
+                if (portfolioItem) {
+                    console.log(`🗑️ Found portfolio item:`, {
+                        stockName: portfolioItem.stockName,
+                        shares: portfolioItem.shares,
+                        buyPrice: portfolioItem.buyPrice
+                    });
+                    
+                    // Remove matching buy transactions from history
+                    removeMatchingBuyTransactions(portfolioItem.stockName, portfolioItem.shares, portfolioItem.buyPrice);
+                } else {
+                    console.log(`⚠️ Portfolio item not found for stock: ${stockName}`);
+                }
+                
+                // Remove from main portfolio
+                portfolio = portfolio.filter(p => p.stockName !== stockName);
+                
+                // Update filtered portfolio
+                filteredPortfolio = filteredPortfolio.filter(p => p.stockName !== stockName);
+                
+                savePortfolio();
+                saveTransactions(); // Save updated transactions
+                displayPortfolio();
+                displayTransactionHistory(); // Refresh transaction history
+                
+                // Request fresh stock data and then update summary
+                ipcRenderer.invoke('get-stock-data').then(data => {
+                    if (data && data.length > 0) {
+                        allStocks = data;
+                        updatePortfolioSummary(); // Update summary with fresh data
+                    } else {
+                        updatePortfolioSummary(); // Update summary with existing data
+                    }
+                }).catch(error => {
+                    console.error('Error getting fresh stock data:', error);
+                    updatePortfolioSummary(); // Update summary with existing data
+                });
+                
+                displayStocks(); // Refresh to update button states
+                showStatus('Stock removed from portfolio', 'success');
+            } catch (error) {
+                console.error('Error removing from portfolio:', error);
+                showStatus('Error removing from portfolio', 'error');
+            }
+        }
+
+        // Buy Stock Modal Functions
+        function showBuyModalValidation(message) {
+            const validationDiv = document.getElementById('buyModalValidation');
+            validationDiv.textContent = message;
+            validationDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                validationDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function hideBuyModalValidation() {
+            document.getElementById('buyModalValidation').style.display = 'none';
+        }
+
+        function showBuyStockModal(stockName, currentPrice, stock) {
+            // Clear any previous validation messages
+            hideBuyModalValidation();
+            
+            document.getElementById('buyStockName').value = stockName;
+            document.getElementById('buyModalPriceInput').value = ''; // Force user to enter their desired buy price
+            document.getElementById('buyModalDateInput').value = new Date().toISOString().split('T')[0];
+            document.getElementById('buySharesInput').value = '1';
+            
+            // Show current stock info
+            if (stock) {
+                const change = stock['%التغيير'] || stock['Changes %'] || 0;
+                document.getElementById('buyCurrentPriceDisplay').textContent = `EGP ${currentPrice.toFixed(2)}`;
+                
+                const changeElement = document.getElementById('buyChangeDisplay');
+                const changeClass = change >= 0 ? 'positive' : 'negative';
+                const changeSign = change >= 0 ? '+' : '';
+                changeElement.textContent = `${changeSign}${change.toFixed(2)}%`;
+                changeElement.className = `info-value ${changeClass}`;
+                
+                document.getElementById('buyStockInfo').style.display = 'block';
+            }
+            
+            document.getElementById('buyStockModal').style.display = 'flex';
+        }
+
+        function hideBuyStockModal() {
+            document.getElementById('buyStockModal').style.display = 'none';
+            // Clear validation messages
+            hideBuyModalValidation();
+            // Clear form
+            document.getElementById('buyStockName').value = '';
+            document.getElementById('buySharesInput').value = '';
+            document.getElementById('buyModalPriceInput').value = '';
+            document.getElementById('buyModalDateInput').value = '';
+            document.getElementById('buyStockInfo').style.display = 'none';
+        }
+
+        function confirmBuyStock() {
+            console.log('🚀 confirmBuyStock() function started');
+            console.log('📍 Function called at:', new Date().toISOString());
+            
+            const stockName = document.getElementById('buyStockName').value;
+            const shares = parseInt(document.getElementById('buySharesInput').value);
+            const buyPrice = parseFloat(document.getElementById('buyModalPriceInput').value);
+            const buyDate = document.getElementById('buyModalDateInput').value;
+            
+            console.log('📊 Buy transaction inputs:', {
+                stockName,
+                shares,
+                buyPrice,
+                buyDate,
+                rawPriceInput: document.getElementById('buyModalPriceInput').value,
+                rawSharesInput: document.getElementById('buySharesInput').value,
+                rawDateInput: document.getElementById('buyModalDateInput').value
+            });
+            
+            // Validation
+            console.log('🔍 Starting validation checks...');
+            
+            if (!stockName) {
+                console.log('❌ Validation failed: Stock name is empty');
+                showBuyModalValidation('Stock name is required');
+                return;
+            }
+            console.log('✅ Stock name validation passed:', stockName);
+            
+            if (!shares || shares <= 0) {
+                console.log('❌ Validation failed: Invalid shares:', shares);
+                showBuyModalValidation('Please enter a valid number of shares');
+                return;
+            }
+            console.log('✅ Shares validation passed:', shares);
+            
+            if (!buyPrice || isNaN(buyPrice) || buyPrice <= 0) {
+                console.error(`❌ Buy price validation failed:`, {
+                    inputValue: document.getElementById('buyModalPriceInput').value,
+                    parsedValue: buyPrice,
+                    isNaN: isNaN(buyPrice),
+                    isLessOrEqual0: buyPrice <= 0
+                });
+                showBuyModalValidation('Please enter a valid buy price');
+                console.log('❌ Buy validation failed - modal will not close');
+                return;
+            }
+            console.log('✅ Buy price validation passed:', buyPrice);
+            
+            if (!buyDate) {
+                console.log('❌ Validation failed: Buy date is empty');
+                showBuyModalValidation('Please select a buy date');
+                return;
+            }
+            console.log('✅ Buy date validation passed:', buyDate);
+            
+            console.log('✅ All buy validations passed, proceeding with transaction...');
+            
+            // Check if stock already exists in portfolio
+            console.log('🔍 Checking if stock exists in portfolio...');
+            const existingIndex = portfolio.findIndex(item => item.stockName === stockName);
+            console.log('📊 Portfolio check result:', { existingIndex, portfolioLength: portfolio.length });
+            
+            if (existingIndex >= 0) {
+                console.log('📈 Stock exists in portfolio, updating existing entry...');
+                // Update existing entry (average price calculation)
+                const existingItem = portfolio[existingIndex];
+                const totalShares = existingItem.shares + shares;
+                const totalInvestment = (existingItem.shares * existingItem.buyPrice) + (shares * buyPrice);
+                const averagePrice = totalInvestment / totalShares;
+                
+                console.log(`💰 Updating existing stock: ${stockName}`);
+                console.log(`📊 Previous: ${existingItem.shares} shares @ ${existingItem.buyPrice}`);
+                console.log(`📊 Adding: ${shares} shares @ ${buyPrice}`);
+                console.log(`📊 New total: ${totalShares} shares @ ${averagePrice.toFixed(2)} average`);
+                
+                portfolio[existingIndex].shares = totalShares;
+                portfolio[existingIndex].buyPrice = averagePrice; // Average price for calculations
+                portfolio[existingIndex].lastBuyPrice = buyPrice; // Most recent purchase price for display
+                console.log(`💾 Updated portfolio item:`, portfolio[existingIndex]);
+                // Keep the original buy date, don't overwrite it
+            } else {
+                console.log('✨ Stock is new, adding to portfolio...');
+                // Add new entry
+                console.log(`💰 Adding new stock: ${stockName}`);
+                console.log(`📊 Shares: ${shares} @ ${buyPrice} on ${buyDate}`);
+                
+                const newPortfolioItem = {
+                    stockName,
+                    shares,
+                    buyPrice,
+                    buyDate,
+                    lastBuyPrice: buyPrice // For new stocks, last buy price = buy price
+                };
+                console.log(`💾 Storing new portfolio item:`, newPortfolioItem);
+                portfolio.push(newPortfolioItem);
+            }
+            
+            // Add transaction record
+            console.log('💾 Adding transaction record...');
+            transactions.push({
+                id: Date.now(),
+                date: buyDate,
+                stockName,
+                type: 'BUY',
+                shares,
+                price: buyPrice,
+                total: shares * buyPrice
+            });
+            console.log('✅ Transaction record added');
+            
+            console.log('💾 Saving portfolio and transactions...');
+            savePortfolio();
+            saveTransactions();
+            console.log('✅ Data saved successfully');
+            
+            console.log('🔄 Updating displays...');
+            displayPortfolio();
+            displayTransactionHistory();
+            console.log('✅ Displays updated');
+            
+            // Request fresh stock data and then update summary
+            ipcRenderer.invoke('get-stock-data').then(data => {
+                if (data && data.length > 0) {
+                    allStocks = data;
+                    updatePortfolioSummary(); // Update summary with fresh data
+                } else {
+                    updatePortfolioSummary(); // Update summary with existing data
+                }
+            }).catch(error => {
+                console.error('Error getting fresh stock data:', error);
+                updatePortfolioSummary(); // Update summary with existing data
+            });
+            
+            displayStocks(); // Refresh to update button states
+            
+            console.log('✅ Buy transaction completed successfully, closing modal...');
+            
+            // Close modal immediately and show success message in main interface
+            try {
+                console.log('🔄 Attempting to close buy modal...');
+                hideBuyStockModal();
+                console.log('✅ Buy modal close function called successfully');
+                showStatus(`✅ Stock bought: ${shares} shares of ${stockName} at EGP ${buyPrice.toFixed(2)}`, 'success');
+            } catch (error) {
+                console.error('❌ Error closing buy modal:', error);
+            }
+        }
+
+        // Test function to verify confirmBuyStock exists
+        function testConfirmBuyStockExists() {
+            console.log('🧪 Testing if confirmBuyStock function exists...');
+            if (typeof confirmBuyStock === 'function') {
+                console.log('✅ confirmBuyStock function exists and is callable');
+            } else {
+                console.error('❌ confirmBuyStock function does not exist!');
+            }
+        }
+
+        // Test functions for debugging modal closing
+        function testCloseBuyModal() {
+            console.log('🔧 Test: Attempting to close buy modal...');
+            try {
+                hideBuyStockModal();
+                console.log('✅ Test: Buy modal closed successfully');
+            } catch (error) {
+                console.error('❌ Test: Error closing buy modal:', error);
+            }
+        }
+
+        function testCloseSellModal() {
+            console.log('🔧 Test: Attempting to close sell modal...');
+            try {
+                hideSellStockModal();
+                console.log('✅ Test: Sell modal closed successfully');
+            } catch (error) {
+                console.error('❌ Test: Error closing sell modal:', error);
+            }
+        }
+
+        // Sell Stock Modal Functions
+        function showSellStockModal(stockName, currentShares, avgBuyPrice) {
+            // Clear any previous validation messages
+            hideSellModalValidation();
+            
+            document.getElementById('sellStockName').value = stockName;
+            document.getElementById('sellMaxShares').textContent = currentShares;
+            document.getElementById('sellSharesInput').max = currentShares;
+            document.getElementById('sellSharesInput').value = '1';
+            document.getElementById('sellDateInput').value = new Date().toISOString().split('T')[0];
+            
+            // Get current stock info
+            const stock = allStocks.find(s => 
+                (s['الإسم_المختصر'] || s['Short Name']) === stockName
+            );
+            
+            if (stock) {
+                const currentPrice = stock['أخر_سعر'] || stock['Last Price'] || 0;
+                const change = stock['%التغيير'] || stock['Changes %'] || 0;
+                
+                document.getElementById('sellPriceInput').value = currentPrice.toFixed(2);
+                document.getElementById('sellCurrentPriceDisplay').textContent = `EGP ${currentPrice.toFixed(2)}`;
+                document.getElementById('sellYourSharesDisplay').textContent = `${currentShares} shares`;
+                document.getElementById('sellAvgPriceDisplay').textContent = `EGP ${avgBuyPrice.toFixed(2)}`;
+                
+                const changeElement = document.getElementById('sellChangeDisplay');
+                const changeClass = change >= 0 ? 'positive' : 'negative';
+                const changeSign = change >= 0 ? '+' : '';
+                changeElement.textContent = `${changeSign}${change.toFixed(2)}%`;
+                changeElement.className = `info-value ${changeClass}`;
+                
+                document.getElementById('sellStockInfo').style.display = 'block';
+            }
+            
+            document.getElementById('sellStockModal').style.display = 'flex';
+        }
+
+        function showSellModalValidation(message) {
+            const validationDiv = document.getElementById('sellModalValidation');
+            validationDiv.textContent = message;
+            validationDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                validationDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function hideSellModalValidation() {
+            document.getElementById('sellModalValidation').style.display = 'none';
+        }
+
+        function hideSellStockModal() {
+            document.getElementById('sellStockModal').style.display = 'none';
+            // Clear validation messages
+            hideSellModalValidation();
+            // Clear form
+            document.getElementById('sellStockName').value = '';
+            document.getElementById('sellSharesInput').value = '';
+            document.getElementById('sellPriceInput').value = '';
+            document.getElementById('sellDateInput').value = '';
+            document.getElementById('sellStockInfo').style.display = 'none';
+        }
+
+        function confirmSellStock() {
+            const stockName = document.getElementById('sellStockName').value;
+            const sharesToSell = parseInt(document.getElementById('sellSharesInput').value);
+            const sellPrice = parseFloat(document.getElementById('sellPriceInput').value);
+            const sellDate = document.getElementById('sellDateInput').value;
+            const maxShares = parseInt(document.getElementById('sellMaxShares').textContent);
+            
+            // Validation
+            if (!stockName) {
+                showSellModalValidation('Stock name is required');
+                return;
+            }
+            
+            if (!sharesToSell || sharesToSell <= 0) {
+                showSellModalValidation('Please enter a valid number of shares to sell');
+                return;
+            }
+            
+            if (sharesToSell > maxShares) {
+                showSellModalValidation(`Cannot sell more than ${maxShares} shares`);
+                return;
+            }
+            
+            if (!sellPrice || sellPrice <= 0) {
+                showSellModalValidation('Please enter a valid sell price');
+                return;
+            }
+            
+            if (!sellDate) {
+                showSellModalValidation('Please select a sell date');
+                return;
+            }
+            
+            console.log('✅ All sell validations passed, proceeding with transaction...');
+            
+            // Find portfolio item
+            const portfolioIndex = portfolio.findIndex(item => item.stockName === stockName);
+            if (portfolioIndex === -1) {
+                showStatus('Stock not found in portfolio', 'error');
+                return;
+            }
+            
+            const portfolioItem = portfolio[portfolioIndex];
+            
+            // Update portfolio
+            console.log(`💸 Selling ${sharesToSell} shares of ${stockName}`);
+            console.log(`📊 Current portfolio shares: ${portfolioItem.shares}`);
+            console.log(`📊 Portfolio before update:`, portfolio);
+            console.log(`📊 Filtered portfolio before update:`, filteredPortfolio);
+            
+            if (sharesToSell === portfolioItem.shares) {
+                // Sell all shares - remove from portfolio
+                console.log(`🗑️ Removing stock completely from portfolio`);
+                portfolio.splice(portfolioIndex, 1);
+            } else {
+                // Sell partial shares - update remaining shares
+                const newShares = portfolioItem.shares - sharesToSell;
+                console.log(`📉 Updating shares: ${portfolioItem.shares} - ${sharesToSell} = ${newShares}`);
+                
+                portfolio[portfolioIndex].shares = newShares;
+            }
+            
+            console.log(`📊 Portfolio after update:`, portfolio);
+            console.log(`📊 Filtered portfolio after update:`, filteredPortfolio);
+            
+            // Add transaction record
+            transactions.push({
+                id: Date.now(),
+                date: sellDate,
+                stockName,
+                type: 'SELL',
+                shares: sharesToSell,
+                price: sellPrice,
+                total: sharesToSell * sellPrice
+            });
+            
+            savePortfolio();
+            saveTransactions();
+            
+            // Update filtered portfolio and display
+            filterPortfolio(); // This will update filteredPortfolio and call displayPortfolio()
+            displayTransactionHistory();
+            
+            // Request fresh stock data and then update summary
+            ipcRenderer.invoke('get-stock-data').then(data => {
+                if (data && data.length > 0) {
+                    allStocks = data;
+                    updatePortfolioSummary(); // Update summary with fresh data
+                } else {
+                    updatePortfolioSummary(); // Update summary with existing data
+                }
+            }).catch(error => {
+                console.error('Error getting fresh stock data:', error);
+                updatePortfolioSummary(); // Update summary with existing data
+            });
+            
+            displayStocks(); // Refresh to update button states
+            
+            console.log('✅ Sell transaction completed successfully, closing modal...');
+            
+            // Close modal immediately and show success message in main interface
+            try {
+                console.log('🔄 Attempting to close sell modal...');
+                hideSellStockModal();
+                console.log('✅ Sell modal close function called successfully');
+                showStatus(`✅ Stock sold: ${sharesToSell} shares of ${stockName} at EGP ${sellPrice.toFixed(2)}`, 'success');
+            } catch (error) {
+                console.error('❌ Error closing sell modal:', error);
+            }
+        }
+
+        // Transaction History Display
+        function displayTransactionHistory() {
+            const table = document.getElementById('transactionTable');
+            const tableBody = document.getElementById('transactionTableBody');
+            const emptyTransactions = document.getElementById('emptyTransactions');
+
+            // Check if elements exist (they might not exist after UI changes)
+            if (!table || !tableBody || !emptyTransactions) {
+                console.log('📊 Transaction history elements not found, skipping display update');
+                return;
+            }
+
+            if (transactions.length === 0) {
+                emptyTransactions.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            emptyTransactions.style.display = 'none';
+            
+            // Sort transactions by date (newest first)
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            tableBody.innerHTML = sortedTransactions.map((transaction, index) => {
+                const typeClass = transaction.type === 'BUY' ? 'positive' : 'negative';
+                const typeIcon = transaction.type === 'BUY' ? '💰' : '💸';
+                
+                return `
+                    <tr>
+                        <td>${transaction.date}</td>
+                        <td>${transaction.stockName}</td>
+                        <td class="${typeClass}">${typeIcon} ${transaction.type}</td>
+                        <td>${transaction.shares}</td>
+                        <td>EGP ${transaction.price.toFixed(2)}</td>
+                        <td>EGP ${transaction.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            table.style.display = 'table';
+            
+            // Update all-time investment summary when transaction history is displayed
+            updateAllTimeInvestmentSummary();
+        }
+
+        function clearTransactionHistory() {
+            showClearTransactionConfirmModal();
+        }
+
+        // Transaction History Modal Functions
+        function showTransactionHistoryModal() {
+            displayModalTransactionHistory();
+            document.getElementById('transactionHistoryModal').style.display = 'flex';
+        }
+
+        function hideTransactionHistoryModal() {
+            document.getElementById('transactionHistoryModal').style.display = 'none';
+        }
+
+        function showTransactionModalMessage(message) {
+            const validationDiv = document.getElementById('transactionModalValidation');
+            validationDiv.textContent = message;
+            validationDiv.style.display = 'block';
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                validationDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function clearTransactionHistoryModal() {
+            showClearTransactionConfirmModal();
+        }
+
+        // Clear Transaction Confirmation Modal Functions
+        function showClearTransactionConfirmModal() {
+            document.getElementById('clearTransactionConfirmModal').style.display = 'flex';
+        }
+
+        function hideClearTransactionConfirmModal() {
+            document.getElementById('clearTransactionConfirmModal').style.display = 'none';
+        }
+
+        function confirmClearTransactionHistory() {
+            // Hide the confirmation modal
+            hideClearTransactionConfirmModal();
+            
+            // Clear the transactions
+            transactions = [];
+            saveTransactions();
+            displayModalTransactionHistory();
+            displayTransactionHistory(); // Also update the original display if it exists
+            updateAllTimeInvestmentSummary();
+            showTransactionModalMessage('✅ Transaction history cleared successfully');
+        }
+
+        function displayModalTransactionHistory() {
+            const table = document.getElementById('modalTransactionTable');
+            const tableBody = document.getElementById('modalTransactionTableBody');
+            const emptyTransactions = document.getElementById('modalEmptyTransactions');
+            
+            if (transactions.length === 0) {
+                emptyTransactions.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+            
+            emptyTransactions.style.display = 'none';
+            
+            // Sort transactions by date (newest first)
+            const sortedTransactions = transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            tableBody.innerHTML = sortedTransactions.map(transaction => {
+                const typeClass = transaction.type === 'BUY' ? 'positive' : 'negative';
+                const typeIcon = transaction.type === 'BUY' ? '💰' : '💸';
+                
+                return `
+                    <tr>
+                        <td>${new Date(transaction.date).toLocaleDateString()}</td>
+                        <td>${transaction.stockName}</td>
+                        <td class="${typeClass}">${typeIcon} ${transaction.type}</td>
+                        <td>${transaction.shares}</td>
+                        <td>EGP ${transaction.price.toFixed(2)}</td>
+                        <td>EGP ${transaction.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            table.style.display = 'table';
+        }
+
 
 
         async function refreshQueriesAndData() {
@@ -2028,12 +3591,32 @@
             console.log(`✅ Watchlist updated: ${updatedCount}/${watchlist.length} stocks refreshed with fresh data`);
         }
 
+        function updatePortfolioWithFreshData() {
+            if (portfolio.length === 0 || allStocks.length === 0) {
+                return;
+            }
+
+            console.log('🔄 Updating portfolio with fresh data...');
+            console.log('📊 Portfolio before update:', portfolio.length, 'stocks');
+            console.log('📊 Fresh data available:', allStocks.length, 'stocks');
+
+            // Update portfolio summary and display
+            updatePortfolioSummary();
+            displayPortfolio();
+            displayTransactionHistory(); // Also refresh transaction history
+
+            console.log(`✅ Portfolio updated with fresh data`);
+        }
+
         // Listen for real-time updates from main process
         ipcRenderer.on('stock-data-updated', (event, data) => {
             allStocks = data;
             
             // Update watchlist with fresh data
             updateWatchlistWithFreshData();
+            
+            // Update portfolio with fresh data
+            updatePortfolioWithFreshData();
             
             // Preserve current search filter
             if (currentSearchTerm) {
@@ -2827,7 +4410,7 @@
         align-items: center;
         justify-content: center;
     ">
-        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.7.1</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.8.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
     </footer>
 </body>
 </html>
