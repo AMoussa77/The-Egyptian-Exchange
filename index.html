@@ -1201,6 +1201,7 @@
                             <tr id="walletHeaders">
                                 <th>Stock Name</th>
                                 <th>Shares</th>
+                                <th>Avg Price</th>
                                 <th>Total Buy Price</th>
                                 <th>Current Price</th>
                                 <th>Current Value</th>
@@ -1408,7 +1409,7 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.9.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.9.1</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
             </div>
         </div>
     </div>
@@ -1878,7 +1879,7 @@
                 
                 // Log the calculation that will be used
                 const totalBuyPrice = item.shares * item.buyPrice;
-                console.log(`✅ ${item.stockName}: ${item.shares} shares × ${item.buyPrice} = ${totalBuyPrice.toFixed(2)} EGP`);
+                console.log(`✅ ${item.stockName}: ${item.shares} shares × ${item.buyPrice} = ${smartFormatPrice(totalBuyPrice)} EGP`);
                 
                 return item;
             });
@@ -2271,7 +2272,7 @@
                         } else if (header === 'حجم_التداول') {
                             displayValue = value.toLocaleString();
                         } else {
-                            displayValue = value.toFixed(2);
+                            displayValue = smartFormatPrice(value);
                         }
                     }
                     
@@ -2349,7 +2350,7 @@
                         } else if (header === 'حجم_التداول') {
                             displayValue = value.toLocaleString();
                         } else {
-                            displayValue = value.toFixed(2);
+                            displayValue = smartFormatPrice(value);
                         }
                     }
                     
@@ -2445,7 +2446,7 @@
                 console.log(`   - buyPrice: ${portfolioItem.buyPrice}`);
                 console.log(`   - investment (shares × buyPrice): ${investment}`);
                 console.log(`   - currentPrice: ${currentPrice}`);
-                console.log(`   - Total Buy Price will show: ${(portfolioItem.shares * portfolioItem.buyPrice).toFixed(2)}`);
+                console.log(`   - Total Buy Price will show: ${smartFormatPrice(portfolioItem.shares * portfolioItem.buyPrice)}`);
                 const currentValue = portfolioItem.shares * currentPrice;
                 const pnl = currentValue - investment;
                 const pnlPercent = investment > 0 ? (pnl / investment) * 100 : 0;
@@ -2464,14 +2465,18 @@
                 const pnlClass = item.pnl >= 0 ? 'positive' : 'negative';
                 const pnlSign = item.pnl >= 0 ? '+' : '';
                 
+                // Calculate average price for this stock
+                const averagePrice = calculateAveragePrice(item.stockName);
+                
                 return `
                     <tr>
                         <td>${item.stockName}</td>
                         <td>${item.shares}</td>
-                        <td>EGP ${(item.shares * item.buyPrice).toFixed(2)}</td>
-                        <td>EGP ${item.currentPrice.toFixed(2)}</td>
-                        <td>EGP ${item.currentValue.toFixed(2)}</td>
-                        <td class="${pnlClass}">${pnlSign}EGP ${item.pnl.toFixed(2)}</td>
+                        <td class="price-neutral">EGP ${smartFormatPrice(averagePrice)}</td>
+                        <td>EGP ${smartFormatPrice(item.shares * item.buyPrice)}</td>
+                        <td>EGP ${smartFormatPrice(item.currentPrice)}</td>
+                        <td>EGP ${smartFormatPrice(item.currentValue)}</td>
+                        <td class="${pnlClass}">${pnlSign}EGP ${smartFormatPrice(item.pnl)}</td>
                         <td class="${pnlClass}">${pnlSign}${item.pnlPercent.toFixed(2)}%</td>
                         <td>
                             <div style="display: flex; gap: 5px; justify-content: center;">
@@ -2494,6 +2499,29 @@
             });
             
             displayPortfolio();
+        }
+
+        // Calculate average price for a stock from portfolio data
+        function calculateAveragePrice(stockName) {
+            const stockItems = portfolio.filter(item => item.stockName === stockName);
+            
+            if (stockItems.length === 0) return 0;
+            
+            let totalShares = 0;
+            let totalCost = 0;
+            
+            stockItems.forEach(item => {
+                totalShares += item.shares;
+                totalCost += item.shares * item.buyPrice;
+            });
+            
+            return totalShares > 0 ? (totalCost / totalShares) : 0;
+        }
+
+        // Smart price formatting - removes trailing zeros while maintaining precision
+        function smartFormatPrice(price) {
+            if (typeof price !== 'number' || isNaN(price)) return '0';
+            return parseFloat(price.toFixed(3)).toString();
         }
 
         function updatePortfolioSummary() {
@@ -2520,7 +2548,7 @@
                 totalInvestment += itemInvestment;
                 totalCurrentValue += itemCurrentValue;
                 
-                console.log(`📈 ${item.stockName}: ${item.shares} shares @ ${item.buyPrice} = ${itemInvestment.toFixed(2)} | Current: ${currentPrice} = ${itemCurrentValue.toFixed(2)}`);
+                console.log(`📈 ${item.stockName}: ${item.shares} shares @ ${item.buyPrice} = ${smartFormatPrice(itemInvestment)} | Current: ${currentPrice} = ${smartFormatPrice(itemCurrentValue)}`);
             });
             
             const totalPnL = totalCurrentValue - totalInvestment;
@@ -2529,11 +2557,11 @@
             const pnlClass = totalPnL >= 0 ? 'positive' : 'negative';
             const pnlSign = totalPnL >= 0 ? '+' : '';
             
-            console.log(`💰 Summary: Investment: ${totalInvestment.toFixed(2)}, Current: ${totalCurrentValue.toFixed(2)}, P&L: ${totalPnL.toFixed(2)} (${totalPnLPercent.toFixed(2)}%)`);
+            console.log(`💰 Summary: Investment: ${smartFormatPrice(totalInvestment)}, Current: ${smartFormatPrice(totalCurrentValue)}, P&L: ${smartFormatPrice(totalPnL)} (${totalPnLPercent.toFixed(2)}%)`);
             
-            document.getElementById('totalInvestment').textContent = `EGP ${totalInvestment.toFixed(2)}`;
-            document.getElementById('currentValue').textContent = `EGP ${totalCurrentValue.toFixed(2)}`;
-            document.getElementById('totalPnL').textContent = `${pnlSign}EGP ${totalPnL.toFixed(2)}`;
+            document.getElementById('totalInvestment').textContent = `EGP ${smartFormatPrice(totalInvestment)}`;
+            document.getElementById('currentValue').textContent = `EGP ${smartFormatPrice(totalCurrentValue)}`;
+            document.getElementById('totalPnL').textContent = `${pnlSign}EGP ${smartFormatPrice(totalPnL)}`;
             document.getElementById('totalPnL').className = `stat-value ${pnlClass}`;
             document.getElementById('totalPnLPercent').textContent = `${pnlSign}${totalPnLPercent.toFixed(2)}%`;
             document.getElementById('totalPnLPercent').className = `stat-value ${pnlClass}`;
@@ -2552,10 +2580,10 @@
             transactions.forEach(transaction => {
                 if (transaction.type === 'BUY') {
                     allTimeInvestment += transaction.total;
-                    console.log(`💰 Buy: ${transaction.stockName} - ${transaction.shares} shares @ ${transaction.price} = ${transaction.total.toFixed(2)}`);
+                    console.log(`💰 Buy: ${transaction.stockName} - ${transaction.shares} shares @ ${transaction.price} = ${smartFormatPrice(transaction.total)}`);
                 } else if (transaction.type === 'SELL') {
                     allTimeSales += transaction.total;
-                    console.log(`💸 Sell: ${transaction.stockName} - ${transaction.shares} shares @ ${transaction.price} = ${transaction.total.toFixed(2)}`);
+                    console.log(`💸 Sell: ${transaction.stockName} - ${transaction.shares} shares @ ${transaction.price} = ${smartFormatPrice(transaction.total)}`);
                 }
             });
             
@@ -2583,12 +2611,12 @@
             const pnlClass = allTimePnL >= 0 ? 'positive' : 'negative';
             const pnlSign = allTimePnL >= 0 ? '+' : '';
             
-            console.log(`📊 All-Time Summary: Investment: ${allTimeInvestment.toFixed(2)}, Sales: ${allTimeSales.toFixed(2)}, Net: ${netInvestment.toFixed(2)}, P&L: ${allTimePnL.toFixed(2)}`);
+            console.log(`📊 All-Time Summary: Investment: ${smartFormatPrice(allTimeInvestment)}, Sales: ${smartFormatPrice(allTimeSales)}, Net: ${smartFormatPrice(netInvestment)}, P&L: ${smartFormatPrice(allTimePnL)}`);
             
-            document.getElementById('allTimeInvestment').textContent = `EGP ${allTimeInvestment.toFixed(2)}`;
-            document.getElementById('allTimeSales').textContent = `EGP ${allTimeSales.toFixed(2)}`;
-            document.getElementById('netInvestment').textContent = `EGP ${netInvestment.toFixed(2)}`;
-            document.getElementById('allTimePnL').textContent = `${pnlSign}EGP ${allTimePnL.toFixed(2)}`;
+            document.getElementById('allTimeInvestment').textContent = `EGP ${smartFormatPrice(allTimeInvestment)}`;
+            document.getElementById('allTimeSales').textContent = `EGP ${smartFormatPrice(allTimeSales)}`;
+            document.getElementById('netInvestment').textContent = `EGP ${smartFormatPrice(netInvestment)}`;
+            document.getElementById('allTimePnL').textContent = `${pnlSign}EGP ${smartFormatPrice(allTimePnL)}`;
             document.getElementById('allTimePnL').className = `stat-value ${pnlClass}`;
         }
 
@@ -2739,7 +2767,7 @@
                 const currentPrice = stock['أخر_سعر'] || stock['Last Price'] || 0;
                 const change = stock['%التغيير'] || stock['Changes %'] || 0;
                 
-                document.getElementById('currentPriceDisplay').textContent = `EGP ${currentPrice.toFixed(2)}`;
+                document.getElementById('currentPriceDisplay').textContent = `EGP ${smartFormatPrice(currentPrice)}`;
                 
                 const changeElement = document.getElementById('changeDisplay');
                 const changeClass = change >= 0 ? 'positive' : 'negative';
@@ -2975,7 +3003,7 @@
             // Show current stock info
             if (stock) {
                 const change = stock['%التغيير'] || stock['Changes %'] || 0;
-                document.getElementById('buyCurrentPriceDisplay').textContent = `EGP ${currentPrice.toFixed(2)}`;
+                document.getElementById('buyCurrentPriceDisplay').textContent = `EGP ${smartFormatPrice(currentPrice)}`;
                 
                 const changeElement = document.getElementById('buyChangeDisplay');
                 const changeClass = change >= 0 ? 'positive' : 'negative';
@@ -3075,7 +3103,7 @@
                 console.log(`💰 Updating existing stock: ${stockName}`);
                 console.log(`📊 Previous: ${existingItem.shares} shares @ ${existingItem.buyPrice}`);
                 console.log(`📊 Adding: ${shares} shares @ ${buyPrice}`);
-                console.log(`📊 New total: ${totalShares} shares @ ${averagePrice.toFixed(2)} average`);
+                console.log(`📊 New total: ${totalShares} shares @ ${smartFormatPrice(averagePrice)} average`);
                 
                 portfolio[existingIndex].shares = totalShares;
                 portfolio[existingIndex].buyPrice = averagePrice; // Average price for calculations
@@ -3144,7 +3172,7 @@
                 console.log('🔄 Attempting to close buy modal...');
                 hideBuyStockModal();
                 console.log('✅ Buy modal close function called successfully');
-                showStatus(`✅ Stock bought: ${shares} shares of ${stockName} at EGP ${buyPrice.toFixed(2)}`, 'success');
+                showStatus(`✅ Stock bought: ${shares} shares of ${stockName} at EGP ${smartFormatPrice(buyPrice)}`, 'success');
             } catch (error) {
                 console.error('❌ Error closing buy modal:', error);
             }
@@ -3201,10 +3229,10 @@
                 const currentPrice = stock['أخر_سعر'] || stock['Last Price'] || 0;
                 const change = stock['%التغيير'] || stock['Changes %'] || 0;
                 
-                document.getElementById('sellPriceInput').value = currentPrice.toFixed(2);
-                document.getElementById('sellCurrentPriceDisplay').textContent = `EGP ${currentPrice.toFixed(2)}`;
+                document.getElementById('sellPriceInput').value = smartFormatPrice(currentPrice);
+                document.getElementById('sellCurrentPriceDisplay').textContent = `EGP ${smartFormatPrice(currentPrice)}`;
                 document.getElementById('sellYourSharesDisplay').textContent = `${currentShares} shares`;
-                document.getElementById('sellAvgPriceDisplay').textContent = `EGP ${avgBuyPrice.toFixed(2)}`;
+                document.getElementById('sellAvgPriceDisplay').textContent = `EGP ${smartFormatPrice(avgBuyPrice)}`;
                 
                 const changeElement = document.getElementById('sellChangeDisplay');
                 const changeClass = change >= 0 ? 'positive' : 'negative';
@@ -3350,7 +3378,7 @@
                 console.log('🔄 Attempting to close sell modal...');
                 hideSellStockModal();
                 console.log('✅ Sell modal close function called successfully');
-                showStatus(`✅ Stock sold: ${sharesToSell} shares of ${stockName} at EGP ${sellPrice.toFixed(2)}`, 'success');
+                showStatus(`✅ Stock sold: ${sharesToSell} shares of ${stockName} at EGP ${smartFormatPrice(sellPrice)}`, 'success');
             } catch (error) {
                 console.error('❌ Error closing sell modal:', error);
             }
@@ -3389,8 +3417,8 @@
                         <td>${transaction.stockName}</td>
                         <td class="${typeClass}">${typeIcon} ${transaction.type}</td>
                         <td>${transaction.shares}</td>
-                        <td>EGP ${transaction.price.toFixed(2)}</td>
-                        <td>EGP ${transaction.total.toFixed(2)}</td>
+                        <td>EGP ${smartFormatPrice(transaction.price)}</td>
+                        <td>EGP ${smartFormatPrice(transaction.total)}</td>
                     </tr>
                 `;
             }).join('');
@@ -3478,8 +3506,8 @@
                         <td>${transaction.stockName}</td>
                         <td class="${typeClass}">${typeIcon} ${transaction.type}</td>
                         <td>${transaction.shares}</td>
-                        <td>EGP ${transaction.price.toFixed(2)}</td>
-                        <td>EGP ${transaction.total.toFixed(2)}</td>
+                        <td>EGP ${smartFormatPrice(transaction.price)}</td>
+                        <td>EGP ${smartFormatPrice(transaction.total)}</td>
                     </tr>
                 `;
             }).join('');
@@ -3687,7 +3715,7 @@
             try {
                 // Create backup data object with portfolio and transactions
                 const backupData = {
-                    version: '0.9.0',
+                    version: '0.9.1',
                     timestamp: new Date().toISOString(),
                     portfolio: portfolio,
                     transactions: transactions
@@ -4920,7 +4948,7 @@
         align-items: center;
         justify-content: center;
     ">
-        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.9.0</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.9.1</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
     </footer>
 </body>
 </html>
