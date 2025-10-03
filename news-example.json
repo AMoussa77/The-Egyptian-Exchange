@@ -1,0 +1,32 @@
+{
+  "news": [
+    {
+      "id": "news-001",
+      "title": "🚀 Egyptian Exchange App v1.0 Released!",
+      "content": "We're excited to announce the release of version 0.9.2 of the Egyptian Exchange App! This update includes:\n\n**New Features:**\n- Real-time stock data scraping\n- Portfolio management\n- Watchlist functionality\n- Market countdown timer\n- News system\n\n**Improvements:**\n- Better performance\n- Enhanced UI/UX\n- Bug fixes and stability improvements\n\nDownload the latest version from our GitHub releases page.",
+      "category": "update",
+      "date": "2024-12-19T10:00:00Z",
+      "source": "Egyptian Exchange Team",
+      "url": "https://github.com/AMoussa77/The-Egyptian-Exchange/releases",
+      "isNew": true
+    },
+    {
+      "id": "news-002", 
+      "title": "🔔 Market Alert: EGX30 Reaches New High",
+      "content": "The Egyptian Exchange's benchmark EGX30 index has reached a new all-time high today, driven by strong performance in banking and telecommunications sectors.\n\n**Key Highlights:**\n- EGX30 up 2.5% to 18,500 points\n- Banking sector leads gains\n- Trading volume exceeds daily average\n\nInvestors are advised to monitor market conditions closely.",
+      "category": "important",
+      "date": "2024-12-19T08:30:00Z",
+      "source": "Market Analysis",
+      "isNew": true
+    },
+    {
+      "id": "news-003",
+      "title": "📊 Weekly Market Summary",
+      "content": "Here's your weekly market summary for the Egyptian Exchange:\n\n**Performance:**\n- EGX30: +1.8% for the week\n- EGX70: +2.1% for the week\n- Total trading volume: EGP 12.5 billion\n\n**Top Performers:**\n- Banking sector: +3.2%\n- Real Estate: +2.8%\n- Telecommunications: +2.1%\n\nNext week's outlook remains positive with several earnings announcements expected.",
+      "category": "general",
+      "date": "2024-12-18T16:00:00Z",
+      "source": "Weekly Report",
+      "isNew": false
+    }
+  ]
+}

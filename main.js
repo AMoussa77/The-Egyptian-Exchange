@@ -50,9 +50,14 @@ try {
   console.error('Failed to load cheerio in main.js:', error.message);
   // Mock cheerio for graceful degradation
   cheerio = {
-    load: () => ({
-      find: () => ({ each: () => {} }),
-      text: () => ''
+    load: (html) => ({
+      find: () => ({ 
+        each: () => {},
+        first: () => ({ text: () => '' }),
+        text: () => ''
+      }),
+      text: () => '',
+      each: () => {}
     })
   };
   console.log('⚠️ Using mock cheerio in main.js');
@@ -1216,6 +1221,513 @@ ipcMain.handle('open-download-page', () => {
   }
 });
 
+// Exchange News Scraper for Mubasher.info
+async function scrapeExchangeNews() {
+  try {
+    console.log('📰 Scraping exchange news from Mubasher.info...');
+    
+    // Check if cheerio is properly loaded
+    if (!cheerio || typeof cheerio.load !== 'function') {
+      console.warn('⚠️ Cheerio not available, returning fallback data');
+      return getFallbackExchangeNews();
+    }
+    
+    const response = await axios.get('https://www.mubasher.info/news/eg/now/announcements', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ar,en-US;q=0.7,en;q=0.3',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+      },
+      timeout: 10000
+    });
+
+    if (!response.data) {
+      console.warn('⚠️ No response data received');
+      return getFallbackExchangeNews();
+    }
+
+    console.log(`📄 Received HTML content: ${response.data.length} characters`);
+    
+    // Log a sample of the HTML to understand its structure
+    const htmlSample = response.data.substring(0, 500);
+    console.log('📄 HTML Sample:', htmlSample.replace(/\s+/g, ' ').trim());
+
+    let $;
+    try {
+      $ = cheerio.load(response.data);
+      
+      // Test if Cheerio is working by trying a simple operation
+      if (typeof $ !== 'function') {
+        throw new Error('Cheerio load did not return a function');
+      }
+      
+      // Test with a simple selector to ensure it's working
+      const testResult = $('body');
+      if (!testResult || typeof testResult.length === 'undefined') {
+        throw new Error('Cheerio selectors not working properly');
+      }
+      
+      console.log('✅ Cheerio loaded and working properly');
+    } catch (cheerioError) {
+      console.warn('⚠️ Cheerio load failed:', cheerioError.message);
+      console.log('📰 Falling back to regex parsing...');
+      const regexAnnouncements = parseAnnouncementsWithRegex(response.data);
+      if (regexAnnouncements.length > 0) {
+        return regexAnnouncements;
+      }
+      return getFallbackExchangeNews();
+    }
+    
+    const announcements = [];
+
+    // Parse the announcements from the page (using Mubasher.info specific selectors)
+    $('.mi-announcement, .news-item, .announcement-item, article, .news-article').each((index, element) => {
+      try {
+        const $item = $(element);
+        
+        // Extract title
+        let title = $item.find('h1, h2, h3, h4, .title, .headline').first().text().trim();
+        if (!title) {
+          title = $item.find('a').first().text().trim();
+        }
+        
+        // Extract content/description
+        let content = $item.find('p, .description, .summary, .content').first().text().trim();
+        if (!content) {
+          content = $item.text().trim().substring(0, 200);
+        }
+        
+        // Extract date with Mubasher.info specific selectors
+        let dateText = $item.find('.mi-announcement__date, .date, .time, time, .meta-date, .post-date').text().trim();
+        let date = new Date();
+        
+        console.log('🔍 Found date text in Cheerio:', dateText);
+        
+        // If we found date text that matches our expected format, parse it
+        if (dateText && !dateText.includes('مضت') && !dateText.includes('دقائق')) {
+          // This is likely the actual date format like "1 أكتوبر 03:28 م"
+          const extractedDate = extractDateFromText(dateText);
+          if (extractedDate) {
+            date = extractedDate;
+            console.log('✅ Parsed date from Cheerio date element:', date);
+          }
+        } else {
+          // Try to extract date from the full item text as fallback
+          const fullItemText = $item.text();
+          const extractedDate = extractDateFromText(fullItemText);
+          if (extractedDate) {
+            date = extractedDate;
+            console.log('✅ Parsed date from full Cheerio item text:', date);
+          } else {
+            console.log('❌ No date found in Cheerio item, using current date');
+          }
+        }
+        
+        // Extract company code if available
+        let company = '';
+        const companyMatch = title.match(/\(([A-Z]+\.CA)\)/);
+        if (companyMatch) {
+          company = companyMatch[1];
+        }
+        
+        if (title && title.length > 10) {
+          announcements.push({
+            id: `egx-${Date.now()}-${index}`,
+            title: title,
+            content: content || title,
+            company: company || 'EGX',
+            date: date.toISOString(),
+            source: 'البورصة المصرية',
+            category: company ? 'announcement' : 'official',
+            isNew: true,
+            url: 'https://www.mubasher.info/news/eg/now/announcements'
+          });
+        }
+      } catch (itemError) {
+        console.warn('Error parsing news item:', itemError);
+      }
+    });
+
+    // If no announcements found with Cheerio, try regex parsing
+    if (announcements.length === 0) {
+      console.log('📰 No announcements found with selectors, trying regex parsing...');
+      const regexAnnouncements = parseAnnouncementsWithRegex(response.data);
+      announcements.push(...regexAnnouncements);
+    }
+    
+    // If still no announcements, try alternative selectors
+    if (announcements.length === 0) {
+      $('div, article, section').each((index, element) => {
+        const $item = $(element);
+        const text = $item.text().trim();
+        
+        // Look for Egyptian Exchange patterns
+        if (text.includes('البورصة المصرية') || text.includes('قرار لجنة القيد') || text.includes('.CA')) {
+          const title = text.substring(0, 100).trim();
+          if (title.length > 20) {
+            announcements.push({
+              id: `egx-fallback-${Date.now()}-${index}`,
+              title: title,
+              content: text.substring(0, 300).trim(),
+              company: 'EGX',
+              date: new Date().toISOString(),
+              source: 'البورصة المصرية',
+              category: 'announcement',
+              isNew: true,
+              url: 'https://www.mubasher.info/news/eg/now/announcements'
+            });
+          }
+        }
+      });
+    }
+
+    console.log(`📰 Scraped ${announcements.length} exchange announcements`);
+    return announcements.slice(0, 25); // Limit to 25 most recent
+    
+  } catch (error) {
+    console.error('❌ Error scraping exchange news:', error);
+    return getFallbackExchangeNews();
+  }
+}
+
+// Parse announcements using regex (fallback when Cheerio fails)
+function parseAnnouncementsWithRegex(html) {
+  try {
+    console.log('📰 Parsing announcements with regex...');
+    const announcements = [];
+    
+    // Remove HTML tags and decode entities for better text extraction
+    const cleanHtml = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
+      .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+      .replace(/&amp;/g, '&') // Decode ampersands
+      .replace(/&lt;/g, '<') // Decode less than
+      .replace(/&gt;/g, '>'); // Decode greater than
+    
+    // Enhanced patterns for Egyptian Exchange announcements
+    const patterns = [
+      // Pattern 1: Mubasher.info announcement structure with date
+      /<span class="mi-announcement__date"[^>]*>([^<]*(?:\d{1,2}\s*أكتوبر\s*\d{1,2}:\d{2}\s*[صم])[^<]*)<\/span>[^<]*<[^>]*>([^<]*\([A-Z]+\.CA\)[^<]*)/gi,
+      // Pattern 2: Company announcements with detailed structure
+      /العنوان\s*:\s*([^<>]*\([A-Z]+\.CA\)[^<>]*قرار[^<>]*)/gi,
+      // Pattern 3: Direct company announcements
+      /([^<>]*\([A-Z]+\.CA\)[^<>]*قرار لجنة القيد[^<>]*)/gi,
+      // Pattern 4: General Egyptian Exchange announcements
+      /([^<>]*البورصة المصرية[^<>]*)/gi,
+      // Pattern 5: Company codes with context
+      /([^<>]{20,}?\([A-Z]{3,5}\.CA\)[^<>]{10,}?)/gi,
+      // Pattern 6: Date-based announcements
+      /(أكتوبر[^<>]*\([A-Z]+\.CA\)[^<>]*)/gi
+    ];
+    
+    // Pattern to extract dates from Arabic text (matching Mubasher.info format)
+    const datePatterns = [
+      // Mubasher.info format: "1 أكتوبر 03:28 م" (day month time)
+      /(\d{1,2})\s*(يناير|فبراير|مارس|أبريل|مايو|يونيو|يوليو|أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر)\s*(\d{1,2}):(\d{2})\s*(ص|م)/gi,
+      // Arabic months with day and year
+      /(\d{1,2})\s*(يناير|فبراير|مارس|أبريل|مايو|يونيو|يوليو|أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر)\s*(\d{4})/gi,
+      // Date in format DD/MM/YYYY or DD-MM-YYYY
+      /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g,
+      // ISO date format
+      /(\d{4})-(\d{1,2})-(\d{1,2})/g
+    ];
+    
+    // Function to extract date from text (using working logic from test)
+    function extractDateFromText(text) {
+      const arabicMonths = {
+        'يناير': 0, 'فبراير': 1, 'مارس': 2, 'أبريل': 3, 'مايو': 4, 'يونيو': 5,
+        'يوليو': 6, 'أغسطس': 7, 'سبتمبر': 8, 'أكتوبر': 9, 'نوفمبر': 10, 'ديسمبر': 11
+      };
+      
+      console.log('🔍 Extracting date from text:', text.substring(0, 200));
+      
+      for (const pattern of datePatterns) {
+        // Create a new RegExp to use exec() for capture groups
+        const regex = new RegExp(pattern.source, pattern.flags);
+        const match = regex.exec(text);
+        if (match) {
+          console.log('📅 Found date match:', match);
+          
+          if (pattern.source.includes('ص|م')) {
+            // Mubasher.info format: "1 أكتوبر 03:28 م"
+            console.log('📅 Match groups:', match);
+            const day = parseInt(match[1]);
+            const month = arabicMonths[match[2]];
+            const hour = parseInt(match[3]);
+            const minute = parseInt(match[4]);
+            const isPM = match[5] === 'م';
+            
+            console.log('📅 Parsed values:', { day, month, hour, minute, isPM });
+            
+            if (month !== undefined && day >= 1 && day <= 31) {
+              // Use 2024 as the year since the news is from 2024
+              const currentYear = 2024;
+              let adjustedHour = hour;
+              
+              // Convert 12-hour to 24-hour format
+              if (isPM && hour !== 12) {
+                adjustedHour = hour + 12;
+              } else if (!isPM && hour === 12) {
+                adjustedHour = 0;
+              }
+              
+              const date = new Date(currentYear, month, day, adjustedHour, minute);
+              console.log('✅ Parsed Mubasher date:', date);
+              return date;
+            }
+          } else if (pattern.source.includes('يناير|فبراير') && match[3] && match[3].length === 4) {
+            // Arabic date format with year
+            const day = parseInt(match[1]);
+            const month = arabicMonths[match[2]];
+            const year = parseInt(match[3]);
+            if (month !== undefined && day >= 1 && day <= 31 && year >= 2020) {
+              const date = new Date(year, month, day);
+              console.log('✅ Parsed Arabic date with year:', date);
+              return date;
+            }
+          } else if (pattern.source.includes('[\/\\-]')) {
+            // DD/MM/YYYY or DD-MM-YYYY format
+            const day = parseInt(match[1]);
+            const month = parseInt(match[2]) - 1; // JavaScript months are 0-based
+            const year = parseInt(match[3]);
+            if (day >= 1 && day <= 31 && month >= 0 && month <= 11 && year >= 2020) {
+              const date = new Date(year, month, day);
+              console.log('✅ Parsed numeric date:', date);
+              return date;
+            }
+          } else {
+            // ISO format YYYY-MM-DD
+            const year = parseInt(match[1]);
+            const month = parseInt(match[2]) - 1;
+            const day = parseInt(match[3]);
+            if (day >= 1 && day <= 31 && month >= 0 && month <= 11 && year >= 2020) {
+              const date = new Date(year, month, day);
+              console.log('✅ Parsed ISO date:', date);
+              return date;
+            }
+          }
+        }
+      }
+      console.log('❌ No date found in text');
+      return null;
+    }
+    
+    const foundTitles = new Set(); // Avoid duplicates
+    
+    // Extract news items with dates and URLs from the actual HTML structure
+    // Updated pattern to handle both relative time ("5 دقائق مضت") and absolute time ("1 أكتوبر 03:28 م")
+    const newsItemPattern = /<span class="mi-announcement__date"[^>]*data-publish-date="([^"]*)"[^>]*>([^<]*)<\/span>[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>([^<]*(?:العنوان\s*:\s*)?[^<]*(?:\([A-Z]+\.CA\))?[^<]*)<\/a>/gi;
+    let newsItemMatch;
+    
+    console.log('🔍 Looking for news items with dates...');
+    
+    while ((newsItemMatch = newsItemPattern.exec(cleanHtml)) !== null) {
+      const isoDateText = newsItemMatch[1].trim(); // ISO date from data-publish-date
+      const displayDateText = newsItemMatch[2].trim(); // Display date text
+      const urlPath = newsItemMatch[3].trim();
+      const titleText = newsItemMatch[4].trim();
+      
+      console.log(`📰 Found news item: "${titleText}" with date: "${displayDateText}" (ISO: ${isoDateText}) and URL: "${urlPath}"`);
+      
+      if (titleText.length > 10 && titleText.length < 300 && !foundTitles.has(titleText)) {
+        foundTitles.add(titleText);
+        
+        // Handle date based on display format
+        let newsDate;
+        let useDisplayDate = false;
+        
+        // Check if display date is relative time (keep it as-is)
+        if (displayDateText.includes('دقائق مضت') || displayDateText.includes('ساعة مضت') || 
+            displayDateText.includes('يوم مضى') || displayDateText.includes('أسبوع مضى')) {
+          // For relative time, use current time but mark to preserve display format
+          newsDate = new Date();
+          useDisplayDate = true;
+          console.log(`📅 Preserving relative time format: "${displayDateText}"`);
+        } else {
+          // For absolute dates, use ISO date with timezone conversion
+          try {
+            newsDate = new Date(isoDateText);
+            // Validate the date
+            if (isNaN(newsDate.getTime())) {
+              throw new Error('Invalid date');
+            }
+            console.log(`📅 Using ISO date: ${isoDateText} -> ${newsDate}`);
+          } catch (error) {
+            console.log(`⚠️ Failed to parse ISO date "${isoDateText}", trying display date`);
+            // Fallback to extracting from display text
+            const extractedDate = extractDateFromText(displayDateText);
+            newsDate = extractedDate || new Date();
+          }
+        }
+        
+        // Extract company code
+        const companyMatch = titleText.match(/\(([A-Z]{3,5}\.CA)\)/);
+        const company = companyMatch ? companyMatch[1] : 'EGX';
+        
+        // Determine category
+        let category = 'announcement';
+        if (titleText.includes('قرار لجنة القيد')) {
+          category = 'official';
+        } else if (company === 'EGX') {
+          category = 'general';
+        }
+        
+        // Build full URL
+        const fullUrl = urlPath.startsWith('http') ? urlPath : `https://www.mubasher.info${urlPath}`;
+        
+        announcements.push({
+          id: `egx-direct-${announcements.length}-${Date.now()}`,
+          title: titleText.length > 100 ? titleText.substring(0, 100) + '...' : titleText,
+          content: titleText,
+          company: company,
+          date: newsDate.toISOString(),
+          displayDate: useDisplayDate ? displayDateText : null, // Preserve original relative time
+          source: 'البورصة المصرية',
+          category: category,
+          isNew: true,
+          url: fullUrl
+        });
+      }
+    }
+    
+    console.log(`📰 Found ${announcements.length} news items with direct extraction`);
+    
+    // If we found news items with direct extraction, return them
+    if (announcements.length > 0) {
+      return announcements.slice(0, 25); // Increased limit to show more news
+    }
+    
+    patterns.forEach((pattern, patternIndex) => {
+      const matches = cleanHtml.match(pattern);
+      if (matches) {
+        matches.forEach((match, index) => {
+          // Clean the text more thoroughly
+          let cleanText = match
+            .replace(/<[^>]*>/g, '') // Remove HTML tags
+            .replace(/\s+/g, ' ') // Normalize whitespace
+            .replace(/^\s*العنوان\s*:\s*/, '') // Remove "العنوان:" prefix
+            .trim();
+          
+          // Validate the text
+          if (cleanText.length > 30 && cleanText.length < 300 && !foundTitles.has(cleanText)) {
+            foundTitles.add(cleanText);
+            
+            // Extract company code
+            const companyMatch = cleanText.match(/\(([A-Z]{3,5}\.CA)\)/);
+            const company = companyMatch ? companyMatch[1] : 'EGX';
+            
+            // Try to extract date from the text or surrounding context
+            let extractedDate = extractDateFromText(cleanText);
+            if (!extractedDate) {
+              // Try to find date in a larger context around this match
+              const matchIndex = cleanHtml.indexOf(match);
+              const contextStart = Math.max(0, matchIndex - 200);
+              const contextEnd = Math.min(cleanHtml.length, matchIndex + match.length + 200);
+              const context = cleanHtml.substring(contextStart, contextEnd);
+              extractedDate = extractDateFromText(context);
+            }
+            
+            // Use extracted date or default to today
+            const newsDate = extractedDate || new Date();
+            
+            // Determine category based on content
+            let category = 'announcement';
+            if (cleanText.includes('قرار لجنة القيد')) {
+              category = 'official';
+            } else if (company === 'EGX') {
+              category = 'general';
+            }
+            
+            announcements.push({
+              id: `egx-regex-${patternIndex}-${index}-${Date.now()}`,
+              title: cleanText.length > 100 ? cleanText.substring(0, 100) + '...' : cleanText,
+              content: cleanText,
+              company: company,
+              date: newsDate.toISOString(),
+              source: 'البورصة المصرية',
+              category: category,
+              isNew: true,
+              url: 'https://www.mubasher.info/news/eg/now/announcements'
+            });
+          }
+        });
+      }
+    });
+    
+    // Remove duplicates and sort by relevance
+    const uniqueAnnouncements = announcements
+      .filter((item, index, self) => 
+        index === self.findIndex(t => t.title === item.title)
+      )
+      .sort((a, b) => {
+        // Prioritize official announcements
+        if (a.category === 'official' && b.category !== 'official') return -1;
+        if (b.category === 'official' && a.category !== 'official') return 1;
+        // Then by company announcements
+        if (a.company !== 'EGX' && b.company === 'EGX') return -1;
+        if (b.company !== 'EGX' && a.company === 'EGX') return 1;
+        return 0;
+      });
+    
+    console.log(`📰 Regex parsing found ${uniqueAnnouncements.length} unique announcements`);
+    return uniqueAnnouncements.slice(0, 15); // Limit to 15 most relevant
+    
+  } catch (error) {
+    console.error('❌ Error in regex parsing:', error);
+    return [];
+  }
+}
+
+// Fallback exchange news data
+function getFallbackExchangeNews() {
+  console.log('📰 Using fallback exchange news data');
+  
+  // Create dates for the past few days to simulate real news
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  
+  return [
+    {
+      id: 'egx-fallback-001',
+      title: 'إعلانات البورصة المصرية - تحديث مباشر',
+      content: 'يتم تحديث الإعلانات من موقع مباشر.إنفو. في حالة عدم توفر الاتصال أو حدوث خطأ تقني، يتم عرض البيانات المحفوظة مسبقاً. يرجى المحاولة مرة أخرى لاحقاً للحصول على أحدث الإعلانات.',
+      company: 'EGX',
+      date: today.toISOString(),
+      source: 'البورصة المصرية',
+      category: 'official',
+      isNew: true,
+      url: 'https://www.mubasher.info/news/eg/now/announcements'
+    },
+    {
+      id: 'egx-fallback-002',
+      title: 'خدمة الإعلانات متاحة',
+      content: 'سيتم استئناف خدمة جلب الإعلانات المباشرة من البورصة المصرية قريباً. يمكنك الضغط على زر التحديث لإعادة المحاولة.',
+      company: 'EGX',
+      date: yesterday.toISOString(),
+      source: 'النظام',
+      category: 'announcement',
+      isNew: false,
+      url: 'https://www.mubasher.info/news/eg/now/announcements'
+    }
+  ];
+}
+
+// IPC handler for exchange news
+ipcMain.handle('fetch-exchange-news', async () => {
+  try {
+    const news = await scrapeExchangeNews();
+    return { success: true, data: news };
+  } catch (error) {
+    console.error('Error fetching exchange news:', error);
+    return { success: false, error: error.message, data: [] };
+  }
+});
+
 // Widget window IPC handlers
 ipcMain.handle('toggle-widget-window', () => {
   try {
@@ -1716,7 +2228,8 @@ function checkMarketStatus() {
                 openTime: settings.marketOpenTime || { hour: 10, minute: 0 },
                 closeTime: settings.marketCloseTime || { hour: 14, minute: 30 },
                 isDayOff: isDayOff,
-                currentDay: todayName
+                currentDay: todayName,
+                daysOff: settings.daysOff || { friday: true, saturday: true }
             });
         }
     } catch (error) {
@@ -1728,7 +2241,8 @@ function checkMarketStatus() {
                 openTime: settings.marketOpenTime || { hour: 10, minute: 0 },
                 closeTime: settings.marketCloseTime || { hour: 14, minute: 30 },
                 isDayOff: false,
-                currentDay: 'error'
+                currentDay: 'error',
+                daysOff: settings.daysOff || { friday: true, saturday: true }
             });
         }
     }
