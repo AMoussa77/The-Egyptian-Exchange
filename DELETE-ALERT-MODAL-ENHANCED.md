@@ -143,5 +143,5 @@ The delete alert confirmation is now:
 ---
 
 **Enhanced:** October 4, 2025  
-**Version:** 0.9.3  
+**Version:** 0.9.4  
 **Status:** ✅ **COMPLETE AND STYLED**

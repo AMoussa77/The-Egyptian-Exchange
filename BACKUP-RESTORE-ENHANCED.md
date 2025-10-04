@@ -21,7 +21,7 @@ I've successfully enhanced the backup and restore system to include **ALL** your
 ### **1. Comprehensive Backup:**
 ```json
 {
-  "version": "0.9.3",
+  "version": "0.9.4",
   "timestamp": "2025-10-04T...",
   "portfolio": [...],
   "transactions": [...],
@@ -97,7 +97,7 @@ I've successfully enhanced the backup and restore system to include **ALL** your
 
 ```json
 {
-  "version": "0.9.3",
+  "version": "0.9.4",
   "timestamp": "2025-10-04T12:34:56.789Z",
   "portfolio": [
     {
@@ -152,5 +152,5 @@ The backup and restore system now protects **ALL** your data:
 ---
 
 **Enhanced:** October 4, 2025  
-**Version:** 0.9.3  
+**Version:** 0.9.4  
 **Status:** ✅ **COMPLETE AND TESTED**

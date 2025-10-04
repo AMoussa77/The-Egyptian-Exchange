@@ -191,6 +191,6 @@ The Egyptian Exchange Stocks app is a comprehensive desktop application that pro
 
 ---
 
-**Version:** 0.9.3  
+**Version:** 0.9.4  
 **Last Updated:** October 4, 2025  
 **Status:** ✅ **FULLY FEATURED AND READY**
