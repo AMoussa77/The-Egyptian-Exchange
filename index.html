@@ -573,6 +573,294 @@
             box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
         }
 
+        .btn-alert {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+
+        .btn-alert:hover {
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
+        }
+
+        /* Enhanced Alert Modal Styles */
+        .alert-modal-content {
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(243, 156, 18, 0.3);
+            overflow: hidden;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+        }
+
+        .alert-modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .alert-form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .alert-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .alert-label {
+            color: #e0e0e0;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .alert-input-readonly {
+            background: rgba(40, 40, 60, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: #b0b0b0;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: not-allowed;
+            transition: all 0.3s ease;
+        }
+
+        .alert-input-readonly:focus {
+            outline: none;
+            border-color: rgba(243, 156, 18, 0.3);
+            background: rgba(40, 40, 60, 0.8);
+        }
+
+        .alert-input {
+            background: rgba(40, 40, 60, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .alert-input:focus {
+            outline: none;
+            border-color: #f39c12;
+            background: rgba(40, 40, 60, 1);
+            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.1);
+        }
+
+        .alert-input::placeholder {
+            color: #888;
+            font-style: italic;
+        }
+
+        .alert-select {
+            background: rgba(40, 40, 60, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .alert-select:focus {
+            outline: none;
+            border-color: #f39c12;
+            background: rgba(40, 40, 60, 1);
+            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.1);
+        }
+
+        .alert-select option {
+            background: #2c2c4a;
+            color: #ffffff;
+            padding: 10px;
+        }
+
+        .alert-cancel-btn {
+            background: rgba(108, 117, 125, 0.8);
+            border: 1px solid #6c757d;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .alert-cancel-btn:hover {
+            background: rgba(108, 117, 125, 1);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .alert-create-btn {
+            transition: all 0.3s ease;
+        }
+
+        .alert-create-btn:hover {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .alert-create-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Modal Animation */
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) translateY(0);
+            }
+        }
+
+        /* Ensure modal backdrop centers the content */
+        #alertModal.modal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+        }
+
+        #alertModal.modal[style*="display: none"] {
+            display: none !important;
+        }
+
+        /* Enhanced Delete Alert Modal Styles */
+        .delete-alert-modal-content {
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            overflow: hidden;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+        }
+
+        .delete-alert-modal-header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .delete-alert-modal-header h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            color: white;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .delete-alert-content {
+            text-align: center;
+        }
+
+        .delete-alert-icon {
+            margin-bottom: 20px;
+        }
+
+        .delete-alert-icon span {
+            font-size: 48px;
+            color: #e74c3c;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .delete-alert-message h4 {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        #deleteAlertDetails {
+            background: rgba(40, 40, 60, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            margin: 15px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        #deleteAlertDetails div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+
+        #deleteAlertDetails div:last-child {
+            margin-bottom: 0;
+        }
+
+        .delete-alert-cancel-btn {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            border: 1px solid #6c757d;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .delete-alert-cancel-btn:hover {
+            background: linear-gradient(135deg, #5a6268, #495057);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .delete-alert-confirm-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border: 1px solid #e74c3c;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .delete-alert-confirm-btn:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Ensure delete alert modal backdrop centers the content */
+        #deleteAlertModal.modal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+        #deleteAlertModal.modal[style*="display: none"] {
+            display: none !important;
+        }
+
         .btn-remove {
             background: linear-gradient(45deg, #95a5a6, #7f8c8d);
         }
@@ -1576,7 +1864,6 @@
     <div class="header">
         <div class="header-left">
             <h1>🏛️ Egyptian Exchange Stocks</h1>
-            <p>Real-time stock data from web scraping</p>
             <div class="market-status">
                 <span id="marketStatus" class="market-status-indicator">📊 Loading...</span>
                 <span id="marketCountdown" class="market-countdown" style="display: none;"></span>
@@ -1604,6 +1891,7 @@
             <button class="tab active" onclick="switchTab('all-stocks')">📈 All Stocks</button>
             <button class="tab" onclick="switchTab('watchlist')">⭐ Watchlist</button>
             <button class="tab" onclick="switchTab('wallet')">💰 Wallet</button>
+            <button class="tab" onclick="switchTab('alerts')">🔔 Alerts</button>
             <button class="tab" onclick="switchTab('exchange-news')">📰 Exchange News</button>
         </div>
 
@@ -1759,6 +2047,43 @@
                 <button class="btn" onclick="showTransactionHistoryModal()" style="background: linear-gradient(135deg, #3498db, #2980b9); border: 1px solid #3498db; padding: 15px 30px; font-size: 16px;">
                     📊 View Transaction History
                 </button>
+            </div>
+        </div>
+
+        <!-- Alerts Tab -->
+        <div id="alerts" class="tab-content">
+            <div class="search-container">
+                <input type="text" id="alertsSearchInput" class="search-input" placeholder="Search alerts..." onkeyup="filterAlerts()">
+            </div>
+
+            <div class="stocks-table">
+                <div class="table-header">
+                    🔔 Stock Price Alerts
+                </div>
+                <div class="table-container">
+                    <div id="alertsLoading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        Loading alerts...
+                    </div>
+                    <table id="alertsTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Stock Name</th>
+                                <th>Current Price</th>
+                                <th>Alert Condition</th>
+                                <th>Target Price</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alertsTableBody"></tbody>
+                    </table>
+                    <div id="emptyAlerts" class="loading">
+                        <p>🔔 No alerts set</p>
+                        <p>Click the alert icon next to any stock to create a price alert!</p>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -1991,13 +2316,13 @@
                 <div class="setting-item" style="flex-direction: column; align-items: flex-start; margin: 20px 0;">
                     <label style="margin-bottom: 10px; font-weight: 600; color: #ffffff;">💾 Wallet Data Backup & Restore:</label>
                     <div style="display: flex; gap: 10px; width: 100%; flex-wrap: wrap;">
-                        <button class="btn" onclick="backupWalletData()" id="backupBtn">💾 Backup Wallet Data</button>
-                        <button class="btn" onclick="restoreWalletData()" id="restoreBtn">📥 Restore Wallet Data</button>
+                        <button class="btn" onclick="backupWalletData()" id="backupBtn">💾 Backup All Data</button>
+                        <button class="btn" onclick="restoreWalletData()" id="restoreBtn">📥 Restore All Data</button>
                     </div>
                     <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="handleRestoreFile(event)">
                     <p style="font-size: 12px; color: #888; margin-top: 10px; line-height: 1.4;">
-                        Backup includes: Portfolio holdings and Transaction history.<br>
-                        Restore will replace current wallet data with backup data.
+                        Backup includes: Portfolio holdings, Transaction history, Watchlist, and Alerts.<br>
+                        Restore will replace all current data with backup data.
                     </p>
                 </div>
                 
@@ -2017,7 +2342,7 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.9.2</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.9.3</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
             </div>
         </div>
     </div>
@@ -2241,7 +2566,7 @@
     <div id="restoreConfirmModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
-                <h3>📥 Restore Wallet Data</h3>
+                <h3>📥 Restore All Data</h3>
                 <button class="close-btn" onclick="hideRestoreConfirmModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -2251,7 +2576,7 @@
                         <strong style="color: #ffc107;">Warning: This will replace your current data</strong>
                     </div>
                     <p style="margin: 0; color: #fff3cd; font-size: 14px;">
-                        Your current portfolio and transaction history will be permanently replaced with the backup data.
+                        Your current portfolio, transaction history, watchlist, and alerts will be permanently replaced with the backup data.
                     </p>
                 </div>
                 
@@ -2286,6 +2611,91 @@
         </div>
     </div>
 
+        <!-- Alert Modal -->
+        <div id="alertModal" class="modal" style="display: none;">
+            <div class="modal-content alert-modal-content" style="max-width: 550px; animation: modalSlideIn 0.3s ease-out;">
+                <div class="modal-header alert-modal-header" style="background: linear-gradient(135deg, #f39c12, #e67e22); border-radius: 15px 15px 0 0;">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin: 0; color: white; font-size: 1.3em;">
+                        <span style="font-size: 28px;">🔔</span>
+                        Set Price Alert
+                    </h3>
+                    <button class="btn btn-small" onclick="hideAlertModal()" style="background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white;">✕</button>
+                </div>
+                <div id="alertModalValidation" class="modal-validation" style="display: none; margin: 15px 20px; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 500;"></div>
+                <div class="modal-body" style="padding: 25px 20px;">
+                    <div class="alert-form-container">
+                        <div class="form-group alert-form-group">
+                            <label class="alert-label">📈 Stock Name</label>
+                            <input type="text" id="alertStockName" readonly class="alert-input-readonly">
+                        </div>
+                        <div class="form-group alert-form-group">
+                            <label class="alert-label">💰 Current Price</label>
+                            <input type="text" id="alertCurrentPrice" readonly class="alert-input-readonly">
+                        </div>
+                        <div class="form-group alert-form-group">
+                            <label class="alert-label">📊 Alert Condition</label>
+                            <select id="alertCondition" class="alert-select">
+                                <option value="above">📈 Price equals or above</option>
+                                <option value="below">📉 Price equals or below</option>
+                            </select>
+                        </div>
+                        <div class="form-group alert-form-group">
+                            <label class="alert-label">🎯 Target Price (EGP)</label>
+                            <input type="number" id="alertTargetPrice" class="alert-input" step="0.01" min="0" placeholder="Enter target price">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer alert-modal-footer" style="padding: 20px; display: flex; gap: 12px; justify-content: flex-end; background: rgba(20, 20, 40, 0.3); border-radius: 0 0 15px 15px;">
+                    <button class="btn btn-secondary alert-cancel-btn" onclick="hideAlertModal()" style="padding: 12px 24px; font-size: 14px; font-weight: 600;">Cancel</button>
+                    <button class="btn alert-create-btn" onclick="createAlert()" style="background: linear-gradient(135deg, #f39c12, #e67e22); border: 1px solid #f39c12; padding: 12px 24px; font-size: 14px; font-weight: 600; color: white;">🔔 Create Alert</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Alert Confirmation Modal -->
+        <div id="deleteAlertModal" class="modal" style="display: none;">
+            <div class="modal-content delete-alert-modal-content" style="max-width: 450px; animation: modalSlideIn 0.3s ease-out;">
+                <div class="modal-header delete-alert-modal-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b); border-radius: 15px 15px 0 0;">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin: 0; color: white; font-size: 1.3em;">
+                        <span style="font-size: 28px;">🗑️</span>
+                        Delete Alert
+                    </h3>
+                    <button class="btn btn-small" onclick="hideDeleteAlertModal()" style="background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white;">✕</button>
+                </div>
+                <div class="modal-body" style="padding: 25px 20px;">
+                    <div class="delete-alert-content">
+                        <div class="delete-alert-icon" style="text-align: center; margin-bottom: 20px;">
+                            <span style="font-size: 48px; color: #e74c3c;">⚠️</span>
+                        </div>
+                        <div class="delete-alert-message" style="text-align: center; margin-bottom: 20px;">
+                            <h4 style="color: #e0e0e0; margin-bottom: 10px; font-size: 1.1em;">Are you sure you want to delete this alert?</h4>
+                            <div id="deleteAlertDetails" style="background: rgba(40, 40, 60, 0.5); padding: 15px; border-radius: 10px; border: 1px solid rgba(231, 76, 60, 0.3);">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="color: #b0b0b0;">Stock:</span>
+                                    <span id="deleteAlertStock" style="color: #e0e0e0; font-weight: 600;"></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="color: #b0b0b0;">Condition:</span>
+                                    <span id="deleteAlertCondition" style="color: #e0e0e0; font-weight: 600;"></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: #b0b0b0;">Target Price:</span>
+                                    <span id="deleteAlertPrice" style="color: #e0e0e0; font-weight: 600;"></span>
+                                </div>
+                            </div>
+                            <p style="color: #b0b0b0; font-size: 0.9em; margin-top: 15px; line-height: 1.4;">
+                                This action cannot be undone. The alert will be permanently removed.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer delete-alert-modal-footer" style="padding: 20px; display: flex; gap: 12px; justify-content: flex-end; background: rgba(20, 20, 40, 0.3); border-radius: 0 0 15px 15px;">
+                    <button class="btn btn-secondary delete-alert-cancel-btn" onclick="hideDeleteAlertModal()" style="padding: 12px 24px; font-size: 14px; font-weight: 600;">Cancel</button>
+                    <button class="btn delete-alert-confirm-btn" onclick="confirmDeleteAlert()" style="background: linear-gradient(135deg, #e74c3c, #c0392b); border: 1px solid #e74c3c; padding: 12px 24px; font-size: 14px; font-weight: 600; color: white;">🗑️ Delete Alert</button>
+                </div>
+            </div>
+        </div>
+
     <script>
         const { ipcRenderer } = require('electron');
         let allStocks = [];
@@ -2294,6 +2704,8 @@
         let filteredWatchlist = [];
         let portfolio = [];
         let filteredPortfolio = [];
+        let alerts = [];
+        let filteredAlerts = [];
         let transactions = [];
         let currentSearchTerm = '';
         let currentWatchlistSearchTerm = '';
@@ -2924,13 +3336,25 @@
                 
                 const portfolioButton = `<button class="btn btn-small btn-wallet" onclick="addToPortfolioByIndex(${index})" title="Buy Stock">💰</button>`;
                 
-                const actionButtons = `<div style="display: flex; gap: 5px; justify-content: center;">${watchlistButton}${portfolioButton}</div>`;
+                const alertButton = `<button class="btn btn-small btn-alert" onclick="showAlertModalByIndex(${index})" title="Set Price Alert">🔔</button>`;
+                
+                const actionButtons = `<div style="display: flex; gap: 5px; justify-content: center;">${watchlistButton}${portfolioButton}${alertButton}</div>`;
                 
                 return `<tr>${row}<td>${actionButtons}</td></tr>`;
             }).join('');
 
             loading.style.display = 'none';
             table.style.display = 'table';
+            
+            // Temporarily disable alerts checking to fix loading issue
+            // TODO: Re-enable after debugging
+            /*
+            try {
+                checkAlerts();
+            } catch (error) {
+                console.error('Error checking alerts:', error);
+            }
+            */
         }
 
         function displayWatchlist() {
@@ -2997,7 +3421,9 @@
                 const removeButton = `<button class="btn btn-small btn-remove" onclick="removeFromWatchlistByWatchlistIndex(${index})" title="Remove from Watchlist">⭐</button>`;
                 const buyButton = `<button class="btn btn-small btn-wallet" onclick="addToPortfolioFromWatchlist(${index})" title="Buy Stock">💰</button>`;
                 
-                const actionButtons = `<div style="display: flex; gap: 5px; justify-content: center;">${removeButton}${buyButton}</div>`;
+                const alertButton = `<button class="btn btn-small btn-alert" onclick="showAlertModalFromWatchlist(${index})" title="Set Price Alert">🔔</button>`;
+                
+                const actionButtons = `<div style="display: flex; gap: 5px; justify-content: center;">${removeButton}${buyButton}${alertButton}</div>`;
                 
                 return `<tr>${row}<td>${actionButtons}</td></tr>`;
             }).join('');
@@ -3352,6 +3778,8 @@
             } else if (tabName === 'wallet') {
                 loadPortfolio();
                 updatePortfolioSummary(); // Ensure summary is up to date (this will also call updateAllTimeInvestmentSummary)
+            } else if (tabName === 'alerts') {
+                loadAlerts();
             } else if (tabName === 'exchange-news') {
                 loadExchangeNews();
             }
@@ -4388,12 +4816,14 @@
 
         function backupWalletData() {
             try {
-                // Create backup data object with portfolio and transactions
+                // Create comprehensive backup data object
                 const backupData = {
-                    version: '0.9.2',
+                    version: '0.9.3',
                     timestamp: new Date().toISOString(),
                     portfolio: portfolio,
-                    transactions: transactions
+                    transactions: transactions,
+                    watchlist: watchlist,
+                    alerts: alerts
                 };
                 
                 // Convert to JSON
@@ -4407,17 +4837,17 @@
                 
                 // Create filename with timestamp
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                link.setAttribute('download', `wallet-backup-${timestamp}.json`);
+                link.setAttribute('download', `egyptian-exchange-backup-${timestamp}.json`);
                 
                 link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 
-                showStatus(`Wallet backup created successfully (${portfolio.length} holdings, ${transactions.length} transactions)`, 'success');
-                console.log('💾 Wallet backup created:', backupData);
+                showStatus(`Complete backup created successfully (${portfolio.length} holdings, ${transactions.length} transactions, ${watchlist.length} watchlist items, ${alerts.length} alerts)`, 'success');
+                console.log('💾 Complete backup created:', backupData);
             } catch (error) {
-                console.error('Error creating wallet backup:', error);
+                console.error('Error creating backup:', error);
                 showStatus('Error creating backup: ' + error.message, 'error');
             }
         }
@@ -4546,7 +4976,7 @@
                     throw new Error('Invalid backup data format');
                 }
                 
-                console.log('🔄 Starting wallet restore with data:', backupData);
+                console.log('🔄 Starting complete restore with data:', backupData);
                 
                 // Restore portfolio data
                 portfolio = Array.isArray(backupData.portfolio) ? backupData.portfolio : [];
@@ -4555,30 +4985,60 @@
                 // Restore transactions data
                 transactions = Array.isArray(backupData.transactions) ? backupData.transactions : [];
                 
+                // Restore watchlist data
+                watchlist = Array.isArray(backupData.watchlist) ? backupData.watchlist : [];
+                filteredWatchlist = [...watchlist];
+                
+                // Restore alerts data
+                alerts = Array.isArray(backupData.alerts) ? backupData.alerts : [];
+                filteredAlerts = [...alerts];
+                
                 // Save restored data to localStorage
                 savePortfolio();
                 saveTransactions();
+                saveWatchlist();
+                saveAlerts();
                 
                 // Update displays
                 displayPortfolio();
                 displayTransactionHistory();
                 updatePortfolioSummary();
                 
+                // Update watchlist display if on watchlist tab
+                if (document.getElementById('watchlist').classList.contains('active')) {
+                    displayWatchlist();
+                }
+                
+                // Update alerts display if on alerts tab
+                if (document.getElementById('alerts').classList.contains('active')) {
+                    displayAlerts();
+                }
+                
                 // Update filtered data if there's a search active
                 if (currentWalletSearchTerm) {
                     filterPortfolio();
                 }
+                if (currentWatchlistSearchTerm) {
+                    filterWatchlist();
+                }
                 
-                showStatus(`Wallet restored successfully (${portfolio.length} holdings, ${transactions.length} transactions)`, 'success');
-                console.log('📥 Wallet restored from backup:', backupData);
+                const portfolioCount = portfolio.length;
+                const transactionCount = transactions.length;
+                const watchlistCount = watchlist.length;
+                const alertCount = alerts.length;
+                
+                showStatus(`Complete restore successful (${portfolioCount} holdings, ${transactionCount} transactions, ${watchlistCount} watchlist items, ${alertCount} alerts)`, 'success');
+                console.log('📥 Complete restore from backup:', backupData);
                 
                 // Log restore details
-                console.log(`📊 Restored ${portfolio.length} portfolio items`);
-                console.log(`📊 Restored ${transactions.length} transactions`);
+                console.log(`📊 Restored ${portfolioCount} portfolio items`);
+                console.log(`📊 Restored ${transactionCount} transactions`);
+                console.log(`📊 Restored ${watchlistCount} watchlist items`);
+                console.log(`📊 Restored ${alertCount} alerts`);
                 
             } catch (error) {
-                console.error('Error restoring wallet:', error);
-                showStatus('Error restoring wallet: ' + error.message, 'error');
+                console.error('Error restoring data:', error);
+                showStatus('Error restoring data: ' + error.message, 'error');
             }
         }
 
@@ -5691,6 +6151,428 @@
             }
         }
 
+        // Alert System Functions
+        function loadAlerts() {
+            const savedAlerts = localStorage.getItem('stockAlerts');
+            if (savedAlerts) {
+                alerts = JSON.parse(savedAlerts);
+            } else {
+                alerts = [];
+            }
+            filteredAlerts = [...alerts];
+            displayAlerts();
+        }
+
+        function saveAlerts() {
+            localStorage.setItem('stockAlerts', JSON.stringify(alerts));
+        }
+
+        function displayAlerts() {
+            const table = document.getElementById('alertsTable');
+            const tableBody = document.getElementById('alertsTableBody');
+            const loading = document.getElementById('alertsLoading');
+            const emptyAlerts = document.getElementById('emptyAlerts');
+
+            if (filteredAlerts.length === 0) {
+                loading.style.display = 'none';
+                table.style.display = 'none';
+                emptyAlerts.style.display = 'block';
+                return;
+            }
+
+            tableBody.innerHTML = filteredAlerts.map((alert, index) => {
+                const statusClass = alert.triggered ? 'price-negative' : 'price-positive';
+                const statusText = alert.triggered ? 'Triggered' : 'Active';
+                const conditionText = alert.condition === 'above' ? 'Above' : 'Below';
+                
+                return `
+                    <tr>
+                        <td>${alert.stockName}</td>
+                        <td class="price-neutral">EGP ${smartFormatPrice(alert.currentPrice)}</td>
+                        <td>${conditionText}</td>
+                        <td class="price-neutral">EGP ${smartFormatPrice(alert.targetPrice)}</td>
+                        <td class="${statusClass}">${statusText}</td>
+                        <td>${new Date(alert.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <div style="display: flex; gap: 5px; justify-content: center;">
+                                <button class="btn btn-small btn-remove" onclick="deleteAlert(${index})" title="Delete Alert">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            loading.style.display = 'none';
+            table.style.display = 'table';
+            emptyAlerts.style.display = 'none';
+        }
+
+        function filterAlerts() {
+            const searchTerm = document.getElementById('alertsSearchInput').value.toLowerCase();
+            filteredAlerts = alerts.filter(alert => 
+                alert.stockName.toLowerCase().includes(searchTerm)
+            );
+            displayAlerts();
+        }
+
+        function showAlertModalByIndex(index) {
+            try {
+                const stock = filteredStocks[index];
+                if (!stock) {
+                    showStatus('Stock not found', 'error');
+                    return;
+                }
+                
+                const stockName = stock['الإسم_المختصر'] || stock['Short Name'] || 'Unknown';
+                const currentPrice = stock['أخر_سعر'] || stock['Last Price'] || 0;
+                
+                showAlertModal(stockName, currentPrice);
+            } catch (error) {
+                console.error('Error showing alert modal:', error);
+                showStatus('Error opening alert modal', 'error');
+            }
+        }
+
+        function showAlertModalFromWatchlist(index) {
+            try {
+                const stock = filteredWatchlist[index];
+                if (!stock) {
+                    showStatus('Stock not found', 'error');
+                    return;
+                }
+                
+                const stockName = stock['الإسم_المختصر'] || stock['Short Name'] || 'Unknown';
+                const currentPrice = stock['أخر_سعر'] || stock['Last Price'] || 0;
+                
+                showAlertModal(stockName, currentPrice);
+            } catch (error) {
+                console.error('Error showing alert modal from watchlist:', error);
+                showStatus('Error opening alert modal', 'error');
+            }
+        }
+
+        function showAlertModal(stockName, currentPrice) {
+            document.getElementById('alertStockName').value = stockName;
+            document.getElementById('alertCurrentPrice').value = `EGP ${smartFormatPrice(currentPrice)}`;
+            document.getElementById('alertTargetPrice').value = '';
+            document.getElementById('alertCondition').value = 'above';
+            document.getElementById('alertModalValidation').style.display = 'none';
+            document.getElementById('alertModal').style.display = 'block';
+        }
+
+        function hideAlertModal() {
+            document.getElementById('alertModal').style.display = 'none';
+        }
+
+        function createAlert() {
+            const stockName = document.getElementById('alertStockName').value;
+            const currentPrice = parseFloat(document.getElementById('alertCurrentPrice').value.replace('EGP ', '').replace(/,/g, ''));
+            const condition = document.getElementById('alertCondition').value;
+            const targetPrice = parseFloat(document.getElementById('alertTargetPrice').value);
+
+            // Validation
+            if (!targetPrice || targetPrice <= 0) {
+                showAlertModalMessage('Please enter a valid target price', 'error');
+                return;
+            }
+
+            if (condition === 'above' && targetPrice <= currentPrice) {
+                showAlertModalMessage('Target price must be above current price for "above" condition', 'error');
+                return;
+            }
+
+            if (condition === 'below' && targetPrice >= currentPrice) {
+                showAlertModalMessage('Target price must be below current price for "below" condition', 'error');
+                return;
+            }
+
+            // Check if alert already exists for this stock and condition
+            const existingAlert = alerts.find(alert => 
+                alert.stockName === stockName && 
+                alert.condition === condition && 
+                !alert.triggered
+            );
+
+            if (existingAlert) {
+                showAlertModalMessage('An active alert already exists for this stock with the same condition', 'error');
+                return;
+            }
+
+            // Create new alert
+            const newAlert = {
+                id: Date.now().toString(),
+                stockName: stockName,
+                currentPrice: currentPrice,
+                condition: condition,
+                targetPrice: targetPrice,
+                triggered: false,
+                createdAt: new Date().toISOString(),
+                triggeredAt: null
+            };
+
+            alerts.push(newAlert);
+            saveAlerts();
+            hideAlertModal();
+            showAlertModalMessage('Alert created successfully!', 'success');
+            
+            // Refresh alerts display if on alerts tab
+            if (document.getElementById('alerts').classList.contains('active')) {
+                loadAlerts();
+            }
+        }
+
+        function deleteAlert(index) {
+            const alert = alerts[index];
+            if (!alert) {
+                console.error('Alert not found at index:', index);
+                return;
+            }
+
+            // Populate the delete confirmation modal with alert details
+            document.getElementById('deleteAlertStock').textContent = alert.stockName;
+            document.getElementById('deleteAlertCondition').textContent = 
+                alert.condition === 'above' ? '📈 Price equals or above' : '📉 Price equals or below';
+            document.getElementById('deleteAlertPrice').textContent = `EGP ${smartFormatPrice(alert.targetPrice)}`;
+
+            // Store the index for the confirm function
+            window.pendingDeleteIndex = index;
+
+            // Show the stylish delete confirmation modal
+            document.getElementById('deleteAlertModal').style.display = 'flex';
+        }
+
+        function hideDeleteAlertModal() {
+            document.getElementById('deleteAlertModal').style.display = 'none';
+            window.pendingDeleteIndex = null;
+        }
+
+        function confirmDeleteAlert() {
+            const index = window.pendingDeleteIndex;
+            if (index !== null && index !== undefined) {
+                alerts.splice(index, 1);
+                saveAlerts();
+                loadAlerts();
+                showStatus('Alert deleted successfully', 'success');
+                hideDeleteAlertModal();
+            }
+        }
+
+        function showAlertModalMessage(message, type) {
+            const validation = document.getElementById('alertModalValidation');
+            validation.textContent = message;
+            validation.style.display = 'block';
+            validation.style.background = type === 'error' ? 'rgba(231, 76, 60, 0.2)' : 'rgba(46, 204, 113, 0.2)';
+            validation.style.border = type === 'error' ? '1px solid #e74c3c' : '1px solid #2ecc71';
+            validation.style.color = type === 'error' ? '#e74c3c' : '#2ecc71';
+        }
+
+        function checkAlerts() {
+            // Ensure alerts array exists
+            if (!alerts || !Array.isArray(alerts)) {
+                console.log('Alerts not initialized, skipping check');
+                return;
+            }
+
+            alerts.forEach(alert => {
+                if (alert.triggered) return; // Skip already triggered alerts
+
+                const stock = allStocks.find(s => 
+                    (s['الإسم_المختصر'] || s['Short Name']) === alert.stockName
+                );
+
+                if (!stock) return;
+
+                const currentPrice = parseFloat(stock['أخر_سعر'] || stock['Last Price'] || 0);
+                if (!currentPrice) return;
+
+                let shouldTrigger = false;
+                if (alert.condition === 'above' && currentPrice >= alert.targetPrice) {
+                    shouldTrigger = true;
+                } else if (alert.condition === 'below' && currentPrice <= alert.targetPrice) {
+                    shouldTrigger = true;
+                }
+
+                if (shouldTrigger) {
+                    alert.triggered = true;
+                    alert.triggeredAt = new Date().toISOString();
+                    
+                    // Show notification
+                    showAlertNotification(alert, currentPrice);
+                    
+                    // Add to news list
+                    addAlertToNews(alert, currentPrice);
+                }
+            });
+
+            saveAlerts();
+        }
+
+        function showAlertNotification(alert, currentPrice) {
+            const conditionText = alert.condition === 'above' ? 'reached or exceeded' : 'reached or dropped below';
+            const message = `${alert.stockName} has ${conditionText} EGP ${smartFormatPrice(alert.targetPrice)} (Current: EGP ${smartFormatPrice(currentPrice)})`;
+            
+            // Use Electron's notification if available
+            if (window.Notification) {
+                new Notification('🔔 Stock Alert Triggered', {
+                    body: message,
+                    icon: 'assets/icon.png'
+                });
+            }
+            
+            showStatus(`🔔 Alert: ${message}`, 'success');
+        }
+
+        function addAlertToNews(alert, currentPrice) {
+            const conditionText = alert.condition === 'above' ? 'reached or exceeded' : 'reached or dropped below';
+            const alertNews = {
+                id: `alert-${alert.id}`,
+                title: `🔔 Price Alert: ${alert.stockName}`,
+                content: `${alert.stockName} has ${conditionText} EGP ${smartFormatPrice(alert.targetPrice)}. Current price: EGP ${smartFormatPrice(currentPrice)}`,
+                company: alert.stockName,
+                date: new Date().toISOString(),
+                source: 'Price Alert System',
+                category: 'alert',
+                isNew: true,
+                url: '#'
+            };
+
+            // Add to news data if it exists
+            if (typeof exchangeNewsData !== 'undefined') {
+                exchangeNewsData.unshift(alertNews);
+                
+                // Update display if on news tab
+                if (document.getElementById('exchange-news').classList.contains('active')) {
+                    displayExchangeNews(exchangeNewsData);
+                }
+            }
+        }
+
+        // Test Alert System (for testing when market is closed)
+        function testAlertSystem() {
+            console.log('🧪 Testing Alert System...');
+            
+            // Create a test alert if none exist
+            if (alerts.length === 0) {
+                const testAlert = {
+                    id: 'test-alert-' + Date.now(),
+                    stockName: 'TEST.CA',
+                    currentPrice: 100,
+                    condition: 'above',
+                    targetPrice: 95, // Set below current price to trigger immediately
+                    triggered: false,
+                    createdAt: new Date().toISOString(),
+                    triggeredAt: null
+                };
+                alerts.push(testAlert);
+                saveAlerts();
+                console.log('✅ Created test alert:', testAlert);
+            }
+            
+            // Simulate price changes for testing
+            const testStocks = [
+                { name: 'TEST.CA', price: 98 }, // Below target (95) - should trigger "above" alert
+                { name: 'DEMO.CA', price: 50 },
+                { name: 'SAMPLE.CA', price: 75 }
+            ];
+            
+            // Add test stocks to allStocks if they don't exist
+            testStocks.forEach(testStock => {
+                const existingStock = allStocks.find(s => 
+                    (s['الإسم_المختصر'] || s['Short Name']) === testStock.name
+                );
+                
+                if (!existingStock) {
+                    allStocks.push({
+                        'الإسم_المختصر': testStock.name,
+                        'Short Name': testStock.name,
+                        'أخر_سعر': testStock.price,
+                        'Last Price': testStock.price,
+                        'الإسم': 'Test Stock ' + testStock.name,
+                        'Name': 'Test Stock ' + testStock.name
+                    });
+                } else {
+                    // Update existing test stock price
+                    existingStock['أخر_سعر'] = testStock.price;
+                    existingStock['Last Price'] = testStock.price;
+                }
+            });
+            
+            console.log('🧪 Test stocks added:', testStocks);
+            console.log('🧪 Current alerts:', alerts);
+            
+            // Force check alerts
+            checkAlerts();
+            
+            // Show test results
+            showStatus('🧪 Alert system test completed! Check console for details.', 'success');
+        }
+
+
+        // Manual test function (call from browser console)
+        function manualTestAlert() {
+            console.log('🧪 Manual Alert Test Starting...');
+            
+            // Create a test alert
+            const testAlert = {
+                id: 'manual-test-' + Date.now(),
+                stockName: 'MANUAL.CA',
+                currentPrice: 100,
+                condition: 'below',
+                targetPrice: 105, // Above current price - should trigger "below" alert
+                triggered: false,
+                createdAt: new Date().toISOString(),
+                triggeredAt: null
+            };
+            
+            alerts.push(testAlert);
+            saveAlerts();
+            
+            // Add test stock
+            allStocks.push({
+                'الإسم_المختصر': 'MANUAL.CA',
+                'Short Name': 'MANUAL.CA',
+                'أخر_سعر': 103, // Below target (105) - should trigger
+                'Last Price': 103,
+                'الإسم': 'Manual Test Stock',
+                'Name': 'Manual Test Stock'
+            });
+            
+            console.log('🧪 Created test alert:', testAlert);
+            console.log('🧪 Added test stock with price 103 (target: 105)');
+            
+            // Check alerts
+            checkAlerts();
+            
+            console.log('🧪 Manual test completed! Check for notifications.');
+            return 'Test completed - check console and notifications';
+        }
+
+        // Make test function available globally
+        window.manualTestAlert = manualTestAlert;
+
+        // Initialize alerts system
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                loadAlerts();
+            } catch (error) {
+                console.error('Error initializing alerts:', error);
+                alerts = [];
+                filteredAlerts = [];
+            }
+        });
+
+        // Temporarily disable alerts interval to fix loading issue
+        // TODO: Re-enable after debugging
+        /*
+        setInterval(() => {
+            try {
+                checkAlerts();
+            } catch (error) {
+                console.error('Error in alert interval check:', error);
+            }
+        }, 30000);
+        */
+
         // Open exchange news link in external browser
         function openExchangeNewsLink(url) {
             if (url && url !== 'https://www.mubasher.info/news/eg/now/announcements') {
@@ -6344,7 +7226,7 @@
         align-items: center;
         justify-content: center;
     ">
-        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.9.2</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.9.3</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
     </footer>
 </body>
 </html>
