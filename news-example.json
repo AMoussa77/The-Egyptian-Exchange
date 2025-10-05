@@ -3,7 +3,7 @@
     {
       "id": "news-001",
       "title": "🚀 Egyptian Exchange App v1.0 Released!",
-      "content": "We're excited to announce the release of version 0.9.2 of the Egyptian Exchange App! This update includes:\n\n**New Features:**\n- Real-time stock data scraping\n- Portfolio management\n- Watchlist functionality\n- Market countdown timer\n- News system\n\n**Improvements:**\n- Better performance\n- Enhanced UI/UX\n- Bug fixes and stability improvements\n\nDownload the latest version from our GitHub releases page.",
+      "content": "We're excited to announce the release of version 0.9.5 of the Egyptian Exchange App! This update includes:\n\n**New Features:**\n- Real-time alert modal price updates\n- Enhanced alert system with live data synchronization\n- Improved user experience for setting price alerts\n\n**Improvements:**\n- Alert modal now shows current live prices\n- Better performance and optimization\n- Enhanced real-time data integration\n- Bug fixes and stability improvements\n\nDownload the latest version from our GitHub releases page.",
       "category": "update",
       "date": "2024-12-19T10:00:00Z",
       "source": "Egyptian Exchange Team",

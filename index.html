@@ -2342,7 +2342,7 @@
                 font-size: 0.75em;
                 color: #888;
             ">
-                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.9.4</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+                <p>The Egyptian Exchange App v<span id="settingsAppVersion">0.9.5</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
             </div>
         </div>
     </div>
@@ -3348,13 +3348,11 @@
             
             // Temporarily disable alerts checking to fix loading issue
             // TODO: Re-enable after debugging
-            /*
             try {
                 checkAlerts();
             } catch (error) {
                 console.error('Error checking alerts:', error);
             }
-            */
         }
 
         function displayWatchlist() {
@@ -4818,7 +4816,7 @@
             try {
                 // Create comprehensive backup data object
                 const backupData = {
-                    version: '0.9.4',
+                    version: '0.9.5',
                     timestamp: new Date().toISOString(),
                     portfolio: portfolio,
                     transactions: transactions,
@@ -5308,6 +5306,19 @@
             displayWatchlist();
             updateLastUpdated();
             updateRecordCounter();
+            
+            // Update alert modal price if it's open
+            updateAlertModalPrice();
+            
+            // Update alerts table with fresh data
+            displayAlerts();
+            
+            // Check alerts for triggering
+            try {
+                checkAlerts();
+            } catch (error) {
+                console.error('Error checking alerts on data update:', error);
+            }
         });
 
         ipcRenderer.on('stock-data-error', (event, error) => {
@@ -5631,6 +5642,8 @@
                 const newsPromises = Object.values(NEWS_SOURCES).map(source => fetchNewsFromSource(source));
                 const results = await Promise.allSettled(newsPromises);
                 
+                // Preserve existing alert items added locally before refresh
+                const existingAlertItems = Array.isArray(newsData) ? newsData.filter(n => n && n.category === 'alert' && n.source === 'Price Alert System') : [];
                 let allNews = [];
                 results.forEach((result, index) => {
                     if (result.status === 'fulfilled' && result.value) {
@@ -5640,6 +5653,11 @@
                     }
                 });
                 
+                // Merge preserved alert items at the top, then fetched news
+                if (existingAlertItems.length > 0) {
+                    allNews = [...existingAlertItems, ...allNews];
+                    console.log(`📰 Preserved ${existingAlertItems.length} app news alert items`);
+                }
                 // Sort news by date (newest first)
                 allNews.sort((a, b) => new Date(b.date) - new Date(a.date));
                 
@@ -5743,6 +5761,7 @@
             const categoryClass = item.category ? item.category.toLowerCase() : 'general';
             const isNew = item.isNew ? 'new' : '';
             const newBadge = item.isNew ? '<span class="news-badge new">New</span>' : '';
+            const showReadMore = item.url && categoryClass !== 'alert';
             
             return `
                 <div class="news-item ${categoryClass}">
@@ -5768,7 +5787,7 @@
                         </div>
                     </div>
                     
-                    ${item.url ? `
+                    ${showReadMore ? `
                         <div class="news-actions">
                             <a href="${item.url}" class="news-btn" onclick="openExternal('${item.url}'); return false;">
                                 🔗 Read More
@@ -5777,6 +5796,44 @@
                     ` : ''}
                 </div>
             `;
+        }
+
+        // Add an alert item into App News modal (newsData)
+        function addAlertToAppNews(alert, currentPrice) {
+            try {
+                if (!Array.isArray(newsData)) newsData = [];
+                const conditionText = alert.condition === 'above' ? 'reached or exceeded' : 'reached or dropped below';
+                const item = {
+                    id: `appnews-alert-${alert.id}`,
+                    title: `🔔 Price Alert: ${alert.stockName}`,
+                    content: `${alert.stockName} has ${conditionText} EGP ${smartFormatPrice(alert.targetPrice)}. Current price: EGP ${smartFormatPrice(currentPrice)}`,
+                    date: new Date().toISOString(),
+                    source: 'Price Alert System',
+                    category: 'alert',
+                    isNew: true,
+                    url: ''
+                };
+                // Insert at top
+                newsData.unshift(item);
+                // Persist cache
+                try {
+                    localStorage.setItem('cachedNews', JSON.stringify(newsData));
+                    localStorage.setItem('lastNewsCheck', Date.now().toString());
+                } catch (e) {
+                    console.warn('Could not cache app news alert item', e);
+                }
+                // If news modal is open, refresh UI
+                const newsModal = document.getElementById('newsModal');
+                if (newsModal && newsModal.style.display === 'flex') {
+                    displayNews(newsData);
+                } else {
+                    // Otherwise show dot
+                    if (typeof showNewsNotificationDot === 'function') showNewsNotificationDot();
+                }
+                console.log('📰 Added alert to App News modal');
+            } catch (err) {
+                console.error('Failed adding alert to App News modal:', err);
+            }
         }
 
         // Format news content (convert markdown-like syntax to HTML)
@@ -5938,6 +5995,8 @@
             showExchangeNewsLoading();
             
             try {
+                // No need to preserve alert items in Exchange News (alerts live only in App News)
+                
                 // Fetch real exchange news from main process (bypasses CORS)
                 const result = await ipcRenderer.invoke('fetch-exchange-news');
                 
@@ -5947,6 +6006,8 @@
                     // Fallback to mock data if scraping fails
                     exchangeNewsData = await fetchMockExchangeNews();
                 }
+                
+                // Do not merge alert items into Exchange News
                 
                 displayExchangeNews(exchangeNewsData);
                 
@@ -6151,6 +6212,13 @@
             }
         }
 
+
+        // No longer adding alerts to Exchange News (alerts go only to App News)
+        function addAlertToNews(alert, currentPrice) {
+            return; // intentionally noop per requirement
+        }
+
+
         // Alert System Functions
         function loadAlerts() {
             const savedAlerts = localStorage.getItem('stockAlerts');
@@ -6185,10 +6253,16 @@
                 const statusText = alert.triggered ? 'Triggered' : 'Active';
                 const conditionText = alert.condition === 'above' ? 'Above' : 'Below';
                 
+                // Get current live price for this stock
+                const stock = allStocks.find(s => 
+                    (s['الإسم_المختصر'] || s['Short Name']) === alert.stockName
+                );
+                const currentLivePrice = stock ? (stock['أخر_سعر'] || stock['Last Price'] || alert.currentPrice) : alert.currentPrice;
+                
                 return `
                     <tr>
                         <td>${alert.stockName}</td>
-                        <td class="price-neutral">EGP ${smartFormatPrice(alert.currentPrice)}</td>
+                        <td class="price-neutral">EGP ${smartFormatPrice(currentLivePrice)}</td>
                         <td>${conditionText}</td>
                         <td class="price-neutral">EGP ${smartFormatPrice(alert.targetPrice)}</td>
                         <td class="${statusClass}">${statusText}</td>
@@ -6258,10 +6332,29 @@
             document.getElementById('alertCondition').value = 'above';
             document.getElementById('alertModalValidation').style.display = 'none';
             document.getElementById('alertModal').style.display = 'block';
+            
+            // Store the stock name for real-time price updates
+            window.currentAlertStockName = stockName;
         }
 
         function hideAlertModal() {
             document.getElementById('alertModal').style.display = 'none';
+            // Clear the stored stock name when modal is closed
+            window.currentAlertStockName = null;
+        }
+        
+        function updateAlertModalPrice() {
+            // Only update if alert modal is open and we have a stock name
+            if (window.currentAlertStockName && document.getElementById('alertModal').style.display === 'block') {
+                const stock = allStocks.find(s => 
+                    (s['الإسم_المختصر'] || s['Short Name']) === window.currentAlertStockName
+                );
+                
+                if (stock) {
+                    const currentPrice = stock['أخر_سعر'] || stock['Last Price'] || 0;
+                    document.getElementById('alertCurrentPrice').value = `EGP ${smartFormatPrice(currentPrice)}`;
+                }
+            }
         }
 
         function createAlert() {
@@ -6373,34 +6466,53 @@
                 return;
             }
 
-            alerts.forEach(alert => {
-                if (alert.triggered) return; // Skip already triggered alerts
+            console.log(`🔔 Checking ${alerts.length} alerts...`);
+
+            alerts.forEach((alert, index) => {
+                if (alert.triggered) {
+                    console.log(`🔔 Alert ${index + 1} (${alert.stockName}) already triggered, skipping`);
+                    return; // Skip already triggered alerts
+                }
 
                 const stock = allStocks.find(s => 
                     (s['الإسم_المختصر'] || s['Short Name']) === alert.stockName
                 );
 
-                if (!stock) return;
+                if (!stock) {
+                    console.log(`🔔 Alert ${index + 1} (${alert.stockName}) - stock not found in data`);
+                    return;
+                }
 
                 const currentPrice = parseFloat(stock['أخر_سعر'] || stock['Last Price'] || 0);
-                if (!currentPrice) return;
+                if (!currentPrice) {
+                    console.log(`🔔 Alert ${index + 1} (${alert.stockName}) - no current price data`);
+                    return;
+                }
+
+                console.log(`🔔 Alert ${index + 1} (${alert.stockName}): Current=${currentPrice}, Target=${alert.targetPrice}, Condition=${alert.condition}`);
 
                 let shouldTrigger = false;
                 if (alert.condition === 'above' && currentPrice >= alert.targetPrice) {
                     shouldTrigger = true;
+                    console.log(`🔔 Alert ${index + 1} TRIGGERED: ${currentPrice} >= ${alert.targetPrice}`);
                 } else if (alert.condition === 'below' && currentPrice <= alert.targetPrice) {
                     shouldTrigger = true;
+                    console.log(`🔔 Alert ${index + 1} TRIGGERED: ${currentPrice} <= ${alert.targetPrice}`);
                 }
 
                 if (shouldTrigger) {
                     alert.triggered = true;
                     alert.triggeredAt = new Date().toISOString();
                     
+                    console.log(`🔔 Alert ${index + 1} (${alert.stockName}) TRIGGERED!`);
+                    
                     // Show notification
                     showAlertNotification(alert, currentPrice);
                     
-                    // Add to news list
-                    addAlertToNews(alert, currentPrice);
+                    // Add to App News modal
+                    if (typeof addAlertToAppNews === 'function') {
+                        addAlertToAppNews(alert, currentPrice);
+                    }
                 }
             });
 
@@ -6420,31 +6532,6 @@
             }
             
             showStatus(`🔔 Alert: ${message}`, 'success');
-        }
-
-        function addAlertToNews(alert, currentPrice) {
-            const conditionText = alert.condition === 'above' ? 'reached or exceeded' : 'reached or dropped below';
-            const alertNews = {
-                id: `alert-${alert.id}`,
-                title: `🔔 Price Alert: ${alert.stockName}`,
-                content: `${alert.stockName} has ${conditionText} EGP ${smartFormatPrice(alert.targetPrice)}. Current price: EGP ${smartFormatPrice(currentPrice)}`,
-                company: alert.stockName,
-                date: new Date().toISOString(),
-                source: 'Price Alert System',
-                category: 'alert',
-                isNew: true,
-                url: '#'
-            };
-
-            // Add to news data if it exists
-            if (typeof exchangeNewsData !== 'undefined') {
-                exchangeNewsData.unshift(alertNews);
-                
-                // Update display if on news tab
-                if (document.getElementById('exchange-news').classList.contains('active')) {
-                    displayExchangeNews(exchangeNewsData);
-                }
-            }
         }
 
         // Test Alert System (for testing when market is closed)
@@ -6547,8 +6634,31 @@
             return 'Test completed - check console and notifications';
         }
 
+        // Test function to manually add an alert news item
+        function testAlertNewsIntegration() {
+            console.log('🧪 Testing alert news integration...');
+            
+            const testAlert = {
+                id: 'test-alert-' + Date.now(),
+                stockName: 'جهينة',
+                currentPrice: 28.67,
+                condition: 'above',
+                targetPrice: 28.67,
+                triggered: true,
+                createdAt: new Date().toISOString(),
+                triggeredAt: new Date().toISOString()
+            };
+            
+            addAlertToNews(testAlert, 28.67);
+            
+            console.log('🧪 Test alert news added. Check Exchange News tab.');
+            showStatus('🧪 Test alert news added to Exchange News', 'success');
+            
+            return 'Test completed - check Exchange News tab';
+        }
+
         // Make test function available globally
-        window.manualTestAlert = manualTestAlert;
+        window.testAlertNewsIntegration = testAlertNewsIntegration;
 
         // Initialize alerts system
         document.addEventListener('DOMContentLoaded', function() {
@@ -6563,7 +6673,6 @@
 
         // Temporarily disable alerts interval to fix loading issue
         // TODO: Re-enable after debugging
-        /*
         setInterval(() => {
             try {
                 checkAlerts();
@@ -6571,7 +6680,6 @@
                 console.error('Error in alert interval check:', error);
             }
         }, 30000);
-        */
 
         // Open exchange news link in external browser
         function openExchangeNewsLink(url) {
@@ -7226,7 +7334,7 @@
         align-items: center;
         justify-content: center;
     ">
-        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.9.4</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
+        <p style="margin: 0;">The Egyptian Exchange App v<span id="appVersion">0.9.5</span> - Developed by <a href="https://github.com/AMoussa77/The-Egyptian-Exchange/releases" target="_blank" style="color: #4a90e2; text-decoration: none;">A Moussa</a></p>
     </footer>
 </body>
 </html>
